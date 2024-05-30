@@ -13,6 +13,7 @@
     <groupId>de.eitco.cicd</groupId>
     <artifactId>dotnet-maven-plugin</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>maven-plugin</packaging>
 
     <description>
         a maven plugin providing a build lifecycle for dotnet
@@ -26,7 +27,7 @@
     </developers>
 
     <scm>
-        <url>https://github.com/eitco/dotnet-maven-plugin</url>
+        <url>https://github.com/eitco/dotnet-maven-plugin.git</url>
         <connection>scm:git:https://github.com/eitco/dotnet-maven-plugin.git</connection>
         <developerConnection>scm:git:https://github.com/eitco/dotnet-maven-plugin.git</developerConnection>
     </scm>
