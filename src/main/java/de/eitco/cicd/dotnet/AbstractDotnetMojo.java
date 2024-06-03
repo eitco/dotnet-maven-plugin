@@ -1,6 +1,5 @@
 package de.eitco.cicd.dotnet;
 
-import org.apache.commons.lang3.SystemUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
@@ -19,11 +18,16 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
 
     protected DotnetExecutor newExecutor() {
 
+        return newExecutor(false);
+    }
+
+    protected DotnetExecutor newExecutor(boolean ignoreResult) {
         return new DotnetExecutor(
                 workingDirectory,
                 dotnetExecutable,
                 targetDirectory,
-                getLog()
+                getLog(),
+                ignoreResult
         );
     }
 

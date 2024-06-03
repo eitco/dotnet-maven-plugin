@@ -13,9 +13,11 @@ public record DotnetExecutor(
         File workingDirectory,
         File executable,
         File targetDirectory,
-        Log log) {
+        Log log,
+        boolean ignoreResult
+) {
 
-    public void execute(String... parameters) throws MojoExecutionException {
+    public int execute(String... parameters) throws MojoExecutionException {
 
         ProcessBuilder builder = new ProcessBuilder();
 
@@ -36,10 +38,12 @@ public record DotnetExecutor(
 
             int returnCode = process.waitFor();
 
-            if (returnCode != 0) {
+            if (returnCode != 0 && !ignoreResult) {
 
                 throw new MojoExecutionException("process " + String.join(" ", command) + " returned code " + returnCode);
             }
+
+            return returnCode;
 
         } catch (IOException | InterruptedException e) {
             throw new MojoExecutionException(e);
@@ -67,4 +71,8 @@ public record DotnetExecutor(
         execute("pack", "--no-build", "-p:PackageId=" + packageId, "-p:PackageVersion=" + version, "-p:Company=" + vendor, "-p:Description=" + description, "-p:RepositoryUrl=" + repositoryUrl);
     }
 
+    public int test(String logger, String testResultDirectory) throws MojoExecutionException {
+
+        return execute("test", "--no-build", "--logger", logger, "--results-directory", testResultDirectory);
+    }
 }
