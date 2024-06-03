@@ -26,6 +26,7 @@ public record DotnetExecutor(
         builder.command(command);
 
         builder.inheritIO();
+        builder.environment().put("DOTNET_CLI_TELEMETRY_OPTOUT", "TRUE");
 
         try {
 
