@@ -19,11 +19,16 @@ public record DotnetExecutor(
 
     public int execute(String... parameters) throws MojoExecutionException {
 
+        return execute(List.of(parameters));
+    }
+
+    public int execute(List<String> parameters) throws MojoExecutionException {
+
         ProcessBuilder builder = new ProcessBuilder();
 
         builder.directory(workingDirectory);
 
-        List<String> command = buildCommand(List.of(parameters));
+        List<String> command = buildCommand(parameters);
 
         builder.command(command);
 
@@ -68,11 +73,37 @@ public record DotnetExecutor(
 
     public void pack(String packageId, String version, String vendor, String description, String repositoryUrl) throws MojoExecutionException {
 
-        execute("pack", "--no-build", "-p:PackageId=" + packageId, "-p:PackageVersion=" + version, "-p:Company=" + vendor, "-p:Description=" + description, "-p:RepositoryUrl=" + repositoryUrl);
+        execute(
+                "pack",
+                "--no-build",
+                "-p:PackageId=" + packageId,
+                "-p:PackageVersion=" + version,
+                "-p:Company=" + vendor,
+                "-p:Description=" + description,
+                "-p:RepositoryUrl=" + repositoryUrl,
+                "--output", targetDirectory.getPath()
+        );
     }
 
     public int test(String logger, String testResultDirectory) throws MojoExecutionException {
 
         return execute("test", "--no-build", "--logger", logger, "--results-directory", testResultDirectory);
+    }
+
+    public void push(String apiKey, String repositoryUrl) throws MojoExecutionException {
+
+        List<String> parameters = new ArrayList<>(List.of("nuget", "push", targetDirectory.getPath() + "/**.nupkg"));
+
+        if (apiKey != null) {
+            parameters.add("--api-key");
+            parameters.add(apiKey);
+        }
+
+        if (repositoryUrl != null) {
+            parameters.add("--source");
+            parameters.add(repositoryUrl);
+        }
+
+        execute(parameters);
     }
 }

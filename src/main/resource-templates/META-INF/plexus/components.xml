@@ -18,6 +18,7 @@
                             <package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:pack
                             </package>
+                            <deploy>${project.groupId}:${project.artifactId}:${project.version}:push</deploy>
                         </phases>
                     </lifecycle>
                 </lifecycles>
@@ -35,6 +36,26 @@
                 <language>c#</language>
                 <addedToClasspath>false</addedToClasspath>
             </configuration>
+        </component>
+        <component>
+            <role>org.sonatype.plexus.components.sec.dispatcher.SecDispatcher</role>
+            <role-hint>dotnet-security</role-hint>
+            <implementation>org.sonatype.plexus.components.sec.dispatcher.DefaultSecDispatcher</implementation>
+            <requirements>
+                <requirement>
+                    <role>org.sonatype.plexus.components.cipher.PlexusCipher</role>
+                    <role-hint>dotnet-security</role-hint>
+                    <field-name>_cipher</field-name>
+                </requirement>
+            </requirements>
+            <configuration>
+                <_configuration-file>~/.m2/settings-security.xml</_configuration-file>
+            </configuration>
+        </component>
+        <component>
+            <role>org.sonatype.plexus.components.cipher.PlexusCipher</role>
+            <role-hint>dotnet-security</role-hint>
+            <implementation>org.sonatype.plexus.components.cipher.DefaultPlexusCipher</implementation>
         </component>
     </components>
 </component-set>
