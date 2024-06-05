@@ -63,7 +63,7 @@ public class NugetPushMojo extends AbstractDotnetMojo {
             dotnetExecutor.addNugetSource(repositoryUrl, usedRepositoryName, nugetServerUser, apiKey);
         }
 
-        dotnetExecutor.push(addSource ? null : apiKey, repository);
+        dotnetExecutor.push(apiKey, repository);
 
     }
 
