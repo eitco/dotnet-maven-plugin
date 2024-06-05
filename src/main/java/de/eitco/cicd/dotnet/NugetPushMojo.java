@@ -5,6 +5,7 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.settings.Server;
 
 @Mojo(name = "push", defaultPhase = LifecyclePhase.DEPLOY)
 public class NugetPushMojo extends AbstractDotnetMojo {
@@ -23,16 +24,16 @@ public class NugetPushMojo extends AbstractDotnetMojo {
     @Parameter
     private Boolean forceAddSource;
 
-    @Parameter(defaultValue = "maven")
-    private String nugetServerUser;
-
     @Parameter
     private String repositoryName;
 
     @Override
     public void execute() throws MojoExecutionException {
 
-        String apiKey = findApiKey(nugetServerId);
+        Server server = findServer(nugetServerId);
+
+        String apiKey = server != null ? decrypt(server.getPassword()) : null;
+        String nugetServerUser = server != null ? decrypt(server.getUsername()) : null;
 
         String repositoryUrl = decideRepositoryUrl();
 

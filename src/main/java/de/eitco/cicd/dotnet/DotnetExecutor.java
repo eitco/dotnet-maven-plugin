@@ -38,6 +38,7 @@ public record DotnetExecutor(
             inheritIo = false;
             return this;
         }
+
         public ExecutionOptions mergeIgnoreResult(boolean ignoreResult) {
 
             this.ignoreResult = ignoreResult || this.ignoreResult;
@@ -168,8 +169,19 @@ public record DotnetExecutor(
         // remove source in case it is already there...
         execute(defaultOptions().ignoreResult().silent(), List.of("nuget", "remove", "source", sourceName), Set.of());
 
+        List<String> parameters = new ArrayList<>(List.of("nuget", "add", "source", url, "--name", sourceName));
 
-        execute(defaultOptions(), List.of("nuget", "add", "source", url, "--name", sourceName, "--username", username, "--password", apiToken), Set.of(apiToken));
+        if (username != null) {
+            parameters.add("--username");
+            parameters.add(username);
+        }
+
+        if (apiToken != null) {
+            parameters.add("--password");
+            parameters.add(apiToken);
+        }
+
+        execute(defaultOptions(), parameters, apiToken != null ? Set.of(apiToken) : Set.of());
     }
 
     public void clean() throws MojoExecutionException {
