@@ -19,10 +19,10 @@ public record DotnetExecutor(
 
     public int execute(String... parameters) throws MojoExecutionException {
 
-        return execute(List.of(parameters));
+        return execute(ignoreResult, List.of(parameters));
     }
 
-    public int execute(List<String> parameters) throws MojoExecutionException {
+    public int execute(boolean ignoreResult, List<String> parameters) throws MojoExecutionException {
 
         ProcessBuilder builder = new ProcessBuilder();
 
@@ -68,21 +68,38 @@ public record DotnetExecutor(
 
     public void build() throws MojoExecutionException {
 
-        execute("build");
+        int returnCode = execute(true, List.of("build"));
+
+        if (returnCode != 0) {
+
+            execute("build");
+        }
     }
 
-    public void pack(String packageId, String version, String vendor, String description, String repositoryUrl) throws MojoExecutionException {
+    public void pack(String version, String vendor, String description, String repositoryUrl) throws MojoExecutionException {
 
-        execute(
+        List<String> parameters = new ArrayList<>(List.of(
                 "pack",
                 "--no-build",
-                "-p:PackageId=" + packageId,
-                "-p:PackageVersion=" + version,
-                "-p:Company=" + vendor,
-                "-p:Description=" + description,
-                "-p:RepositoryUrl=" + repositoryUrl,
-                "--output", targetDirectory.getPath()
-        );
+                "-p:PackageVersion=" + version
+        ));
+
+        if (vendor != null) {
+            parameters.add("-p:Company=" + vendor);
+        }
+
+        if (description != null) {
+            parameters.add("-p:Description=" + description);
+        }
+
+        if (repositoryUrl != null) {
+            parameters.add("-p:RepositoryUrl=" + repositoryUrl);
+        }
+
+        parameters.add("--output");
+        parameters.add(targetDirectory.getPath());
+
+        execute(false, parameters);
     }
 
     public int test(String logger, String testResultDirectory) throws MojoExecutionException {
@@ -90,7 +107,7 @@ public record DotnetExecutor(
         return execute("test", "--no-build", "--logger", logger, "--results-directory", testResultDirectory);
     }
 
-    public void push(String apiKey, String repositoryUrl) throws MojoExecutionException {
+    public void push(String apiKey, String repository) throws MojoExecutionException {
 
         List<String> parameters = new ArrayList<>(List.of("nuget", "push", targetDirectory.getPath() + "/**.nupkg"));
 
@@ -99,11 +116,21 @@ public record DotnetExecutor(
             parameters.add(apiKey);
         }
 
-        if (repositoryUrl != null) {
+        if (repository != null) {
             parameters.add("--source");
-            parameters.add(repositoryUrl);
+            parameters.add(repository);
         }
 
-        execute(parameters);
+        execute(ignoreResult, parameters);
+    }
+
+    public void addNugetSource(String url, String sourceName, String username, String apiToken) throws MojoExecutionException {
+
+        execute("nuget", "add", "source", url, "--name", sourceName, "--username", username, "--password", apiToken);
+    }
+
+    public void clean() throws MojoExecutionException {
+
+        execute("clean");
     }
 }

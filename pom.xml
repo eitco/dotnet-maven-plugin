@@ -31,6 +31,9 @@
         <developerConnection>scm:git:https://github.com/eitco/dotnet-maven-plugin.git</developerConnection>
       <tag>HEAD</tag>
   </scm>
+    <properties>
+        <maven-clean-plugin.version>3.3.2</maven-clean-plugin.version>
+    </properties>
 
 
     <dependencies>
@@ -59,6 +62,11 @@
             <groupId>net.lingala.zip4j</groupId>
             <artifactId>zip4j</artifactId>
             <version>2.11.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-clean-plugin</artifactId>
+            <version>${maven-clean-plugin.version}</version>
         </dependency>
     </dependencies>
 

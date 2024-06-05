@@ -9,9 +9,6 @@ import org.apache.maven.plugins.annotations.Parameter;
 @Mojo(name = "pack", defaultPhase = LifecyclePhase.PACKAGE)
 public class PackMojo extends AbstractDotnetMojo {
 
-    @Parameter(defaultValue = "${project.groupId}-${project.artifactId}")
-    private String projectId;
-
     @Parameter(defaultValue = "${project.version}")
     private String projectVersion;
 
@@ -27,6 +24,6 @@ public class PackMojo extends AbstractDotnetMojo {
     @Override
     public void execute() throws MojoExecutionException {
 
-        newExecutor().pack(projectId, projectVersion, vendor, description, repositoryUrl);
+        newExecutor().pack(projectVersion, vendor, description, repositoryUrl);
     }
 }

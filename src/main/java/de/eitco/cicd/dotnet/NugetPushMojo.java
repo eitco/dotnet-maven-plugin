@@ -14,7 +14,7 @@ import org.sonatype.plexus.components.sec.dispatcher.SecDispatcherException;
 @Mojo(name = "push", defaultPhase = LifecyclePhase.DEPLOY)
 public class NugetPushMojo extends AbstractDotnetMojo {
 
-    @Parameter
+    @Parameter(defaultValue = "nuget-server")
     private String nugetServerId;
 
     @Parameter
@@ -29,6 +29,15 @@ public class NugetPushMojo extends AbstractDotnetMojo {
     @Parameter(defaultValue = "${project}", readonly = true)
     protected MavenProject project;
 
+    @Parameter
+    private Boolean forceAddSource;
+
+    @Parameter(defaultValue = "maven")
+    private String nugetServerUser;
+
+    @Parameter
+    private String repositoryName;
+
     @Component(hint = "dotnet-security")
     private SecDispatcher securityDispatcher;
 
@@ -39,7 +48,22 @@ public class NugetPushMojo extends AbstractDotnetMojo {
 
         String repositoryUrl = decideRepositoryUrl();
 
-        newExecutor().push(apiKey, repositoryUrl);
+        boolean addSource = coalesce(forceAddSource, repositoryUrl.endsWith("/index.json"));
+
+        DotnetExecutor dotnetExecutor = newExecutor();
+
+        String repository = repositoryUrl;
+
+        if (addSource) {
+
+            String usedRepositoryName = coalesce(repositoryName, nugetServerId);
+
+            repository = usedRepositoryName;
+
+            dotnetExecutor.addNugetSource(repositoryUrl, usedRepositoryName, nugetServerUser, apiKey);
+        }
+
+        dotnetExecutor.push(addSource ? null : apiKey, repository);
 
     }
 
@@ -55,13 +79,14 @@ public class NugetPushMojo extends AbstractDotnetMojo {
         return coalesce(nugetServerUrl, project.getDistributionManagement().getRepository().getUrl());
     }
 
-    private String coalesce(String... strings) {
+    @SafeVarargs
+    private <Type> Type coalesce(Type... elements) {
 
-        for (String string : strings) {
+        for (Type element : elements) {
 
-            if (string != null) {
+            if (element != null) {
 
-                return string;
+                return element;
             }
         }
 
