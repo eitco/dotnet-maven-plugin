@@ -8,6 +8,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public record DotnetExecutor(
         File workingDirectory,
@@ -19,10 +22,36 @@ public record DotnetExecutor(
 
     public int execute(String... parameters) throws MojoExecutionException {
 
-        return execute(ignoreResult, List.of(parameters));
+        return execute(defaultOptions().mergeIgnoreResult(ignoreResult), List.of(parameters), Set.of());
     }
 
-    public int execute(boolean ignoreResult, List<String> parameters) throws MojoExecutionException {
+    private static class ExecutionOptions {
+        private boolean ignoreResult = false;
+        private boolean inheritIo = true;
+
+        public ExecutionOptions ignoreResult() {
+            ignoreResult = true;
+            return this;
+        }
+
+        public ExecutionOptions silent() {
+            inheritIo = false;
+            return this;
+        }
+        public ExecutionOptions mergeIgnoreResult(boolean ignoreResult) {
+
+            this.ignoreResult = ignoreResult || this.ignoreResult;
+
+            return this;
+        }
+    }
+
+    private static ExecutionOptions defaultOptions() {
+
+        return new ExecutionOptions();
+    }
+
+    private int execute(ExecutionOptions executionOptions, List<String> parameters, Set<String> obfuscation) throws MojoExecutionException {
 
         ProcessBuilder builder = new ProcessBuilder();
 
@@ -32,20 +61,25 @@ public record DotnetExecutor(
 
         builder.command(command);
 
-        builder.inheritIO();
+        if (executionOptions.inheritIo) {
+
+            builder.inheritIO();
+        }
+
         builder.environment().put("DOTNET_CLI_TELEMETRY_OPTOUT", "TRUE");
 
         try {
 
-            log.info("Executing command: " + String.join(" ", command));
+
+            log.info("Executing command: " + presentCommand(command, obfuscation));
 
             Process process = builder.start();
 
             int returnCode = process.waitFor();
 
-            if (returnCode != 0 && !ignoreResult) {
+            if (returnCode != 0 && !executionOptions.ignoreResult) {
 
-                throw new MojoExecutionException("process " + String.join(" ", command) + " returned code " + returnCode);
+                throw new MojoExecutionException("process " + presentCommand(command, obfuscation) + " returned code " + returnCode);
             }
 
             return returnCode;
@@ -53,6 +87,11 @@ public record DotnetExecutor(
         } catch (IOException | InterruptedException e) {
             throw new MojoExecutionException(e);
         }
+    }
+
+    private static String presentCommand(List<String> command, Set<String> obfuscation) {
+
+        return command.stream().map(x -> obfuscation.contains(x) ? "****" : x).collect(Collectors.joining(" "));
     }
 
     private List<String> buildCommand(List<String> parameters) {
@@ -68,7 +107,7 @@ public record DotnetExecutor(
 
     public void build() throws MojoExecutionException {
 
-        int returnCode = execute(true, List.of("build"));
+        int returnCode = execute(defaultOptions().ignoreResult(), List.of("build"), Set.of());
 
         if (returnCode != 0) {
 
@@ -99,7 +138,7 @@ public record DotnetExecutor(
         parameters.add("--output");
         parameters.add(targetDirectory.getPath());
 
-        execute(false, parameters);
+        execute(defaultOptions(), parameters, Set.of());
     }
 
     public int test(String logger, String testResultDirectory) throws MojoExecutionException {
@@ -121,12 +160,16 @@ public record DotnetExecutor(
             parameters.add(repository);
         }
 
-        execute(ignoreResult, parameters);
+        execute(defaultOptions().mergeIgnoreResult(ignoreResult), parameters, Optional.ofNullable(apiKey).stream().collect(Collectors.toSet()));
     }
 
     public void addNugetSource(String url, String sourceName, String username, String apiToken) throws MojoExecutionException {
 
-        execute("nuget", "add", "source", url, "--name", sourceName, "--username", username, "--password", apiToken);
+        // remove source in case it is already there...
+        execute(defaultOptions().ignoreResult().silent(), List.of("nuget", "remove", "source", sourceName), Set.of());
+
+
+        execute(defaultOptions(), List.of("nuget", "add", "source", url, "--name", sourceName, "--username", username, "--password", apiToken), Set.of(apiToken));
     }
 
     public void clean() throws MojoExecutionException {

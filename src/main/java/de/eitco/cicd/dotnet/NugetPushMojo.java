@@ -1,30 +1,21 @@
 package de.eitco.cicd.dotnet;
 
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.settings.Server;
-import org.apache.maven.settings.Settings;
-import org.sonatype.plexus.components.sec.dispatcher.SecDispatcher;
-import org.sonatype.plexus.components.sec.dispatcher.SecDispatcherException;
 
 @Mojo(name = "push", defaultPhase = LifecyclePhase.DEPLOY)
 public class NugetPushMojo extends AbstractDotnetMojo {
 
     @Parameter(defaultValue = "nuget-server")
-    private String nugetServerId;
-
+    protected String nugetServerId;
     @Parameter
     private String nugetServerUrl;
 
     @Parameter
     private String nugetSnapshotServerUrl;
-
-    @Parameter(defaultValue = "${settings}", readonly = true)
-    protected Settings settings;
 
     @Parameter(defaultValue = "${project}", readonly = true)
     protected MavenProject project;
@@ -38,17 +29,14 @@ public class NugetPushMojo extends AbstractDotnetMojo {
     @Parameter
     private String repositoryName;
 
-    @Component(hint = "dotnet-security")
-    private SecDispatcher securityDispatcher;
-
     @Override
     public void execute() throws MojoExecutionException {
 
-        String apiKey = findApiKey();
+        String apiKey = findApiKey(nugetServerId);
 
         String repositoryUrl = decideRepositoryUrl();
 
-        boolean addSource = coalesce(forceAddSource, repositoryUrl.endsWith("/index.json"));
+        boolean addSource = coalesce(forceAddSource, nugetSources.get(nugetServerId) == null && repositoryUrl.endsWith("/index.json"));
 
         DotnetExecutor dotnetExecutor = newExecutor();
 
@@ -73,10 +61,10 @@ public class NugetPushMojo extends AbstractDotnetMojo {
 
         if (isSnapshot) {
 
-            return coalesce(nugetSnapshotServerUrl, nugetServerUrl, project.getDistributionManagement().getSnapshotRepository().getUrl(), project.getDistributionManagement().getRepository().getUrl());
+            return coalesce(nugetSnapshotServerUrl, nugetServerUrl, project.getDistributionManagement().getSnapshotRepository().getUrl(), nugetSources.get(nugetServerId), project.getDistributionManagement().getRepository().getUrl());
         }
 
-        return coalesce(nugetServerUrl, project.getDistributionManagement().getRepository().getUrl());
+        return coalesce(nugetServerUrl, nugetSources.get(nugetServerId), project.getDistributionManagement().getRepository().getUrl());
     }
 
     @SafeVarargs
@@ -93,27 +81,4 @@ public class NugetPushMojo extends AbstractDotnetMojo {
         return null;
     }
 
-    private String findApiKey() throws MojoExecutionException {
-
-        if (nugetServerId == null) {
-
-            return null;
-        }
-
-        Server server = settings.getServer(nugetServerId);
-
-        if (server == null) {
-
-            throw new MojoExecutionException("server " + nugetServerId + " not found");
-        }
-
-        try {
-
-            return securityDispatcher.decrypt(server.getPassword());
-
-        } catch (SecDispatcherException e) {
-
-            throw new MojoExecutionException(e);
-        }
-    }
 }
