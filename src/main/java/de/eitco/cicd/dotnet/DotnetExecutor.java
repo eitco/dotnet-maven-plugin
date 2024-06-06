@@ -179,6 +179,7 @@ public record DotnetExecutor(
         if (apiToken != null) {
             parameters.add("--password");
             parameters.add(apiToken);
+            parameters.add("--store-password-in-clear-text");
         }
 
         execute(defaultOptions(), parameters, apiToken != null ? Set.of(apiToken) : Set.of());
