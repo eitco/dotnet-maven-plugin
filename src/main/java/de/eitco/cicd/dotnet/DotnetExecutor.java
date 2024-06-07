@@ -126,7 +126,7 @@ public record DotnetExecutor(
         execute(defaultOptions(), parameters, Set.of());
     }
 
-    public void build(String version, String assemblyVersion, String vendor) throws MojoExecutionException {
+    public void build(String version, String assemblyVersion, String vendor, String configuration) throws MojoExecutionException {
 
         List<String> parameters = new ArrayList<>(List.of("build", "-p:Version=" + version));
 
@@ -136,6 +136,10 @@ public record DotnetExecutor(
 
         if (vendor != null) {
             parameters.add("-p:Company=" + vendor);
+        }
+
+        if (configuration != null) {
+            parameters.add("--configuration=" + configuration);
         }
 
         retry(1, parameters);
