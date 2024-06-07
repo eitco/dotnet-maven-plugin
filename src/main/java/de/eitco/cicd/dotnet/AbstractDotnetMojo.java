@@ -23,10 +23,21 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.build.directory}")
     protected File targetDirectory;
 
+    @Parameter(defaultValue = "${project.version}")
+    protected String projectVersion;
+
+    @Parameter
+    protected String assemblyVersion;
+
+    @Parameter(defaultValue = "${project.organization.name}")
+    protected String vendor;
+
     @Parameter
     protected Map<String, String> nugetSources = Map.of();
+
     @Parameter(defaultValue = "${settings}", readonly = true)
     protected Settings settings;
+
     @Component(hint = "dotnet-security")
     private SecDispatcher securityDispatcher;
 

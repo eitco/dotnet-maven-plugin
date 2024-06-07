@@ -106,14 +106,39 @@ public record DotnetExecutor(
         return command;
     }
 
-    public void build() throws MojoExecutionException {
+    private void retry(int times, String... parameters) throws MojoExecutionException {
 
-        int returnCode = execute(defaultOptions().ignoreResult(), List.of("build"), Set.of());
+        retry(times, List.of(parameters));
+    }
 
-        if (returnCode != 0) {
+    private void retry(int times, List<String> parameters) throws MojoExecutionException {
 
-            execute("build");
+        for (int index = 0; index < times; index++) {
+
+            int returnCode = execute(defaultOptions().ignoreResult(), parameters, Set.of());
+
+            if (returnCode == 0) {
+
+                return;
+            }
         }
+
+        execute(defaultOptions(), parameters, Set.of());
+    }
+
+    public void build(String version, String assemblyVersion, String vendor) throws MojoExecutionException {
+
+        List<String> parameters = new ArrayList<>(List.of("build", "-p:Version=" + version));
+
+        if (assemblyVersion != null) {
+            parameters.add("-p:AssemblyVersion=" + assemblyVersion);
+        }
+
+        if (vendor != null) {
+            parameters.add("-p:Company=" + vendor);
+        }
+
+        retry(1, parameters);
     }
 
     public void pack(String version, String vendor, String description, String repositoryUrl) throws MojoExecutionException {
@@ -121,7 +146,7 @@ public record DotnetExecutor(
         List<String> parameters = new ArrayList<>(List.of(
                 "pack",
                 "--no-build",
-                "-p:PackageVersion=" + version
+                "-p:Version=" + version
         ));
 
         if (vendor != null) {

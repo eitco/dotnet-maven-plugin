@@ -9,12 +9,6 @@ import org.apache.maven.plugins.annotations.Parameter;
 @Mojo(name = "pack", defaultPhase = LifecyclePhase.PACKAGE)
 public class PackMojo extends AbstractDotnetMojo {
 
-    @Parameter(defaultValue = "${project.version}")
-    private String projectVersion;
-
-    @Parameter(defaultValue = "${project.organization.name}")
-    private String vendor;
-
     @Parameter(defaultValue = "${project.description}")
     private String description;
 
