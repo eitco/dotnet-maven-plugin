@@ -195,9 +195,6 @@ public record DotnetExecutor(
 
     public void updateNugetSource(String url, String sourceName, String username, String apiToken) throws MojoExecutionException {
 
-//        // remove source in case it is already there...
-//        execute(defaultOptions().ignoreResult().silent(), List.of("nuget", "remove", "source", sourceName), Set.of());
-
         List<String> parameters = new ArrayList<>(List.of("nuget", "update", "source", sourceName));
 
         if (url != null) {
@@ -210,14 +207,13 @@ public record DotnetExecutor(
             parameters.add(username);
         }
 
-        /*
-        nuget update source "Eitco nexus" --username ${CI_NEXUS_USER} --password ${CI_NEXUS_PASSWORD} --store-password-in-clear-text
-         */
-
         if (apiToken != null) {
             parameters.add("--password");
             parameters.add(apiToken);
-//            parameters.add("--store-password-in-clear-text");
+
+            if (!SystemUtils.IS_OS_WINDOWS) {
+                parameters.add("--store-password-in-clear-text");
+            }
         }
 
         execute(defaultOptions(), parameters, apiToken != null ? Set.of(apiToken) : Set.of());
