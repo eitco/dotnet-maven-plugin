@@ -22,7 +22,7 @@ public class InitializeMojo extends AbstractDotnetMojo {
 
             Server server = findServer(key);
 
-            dotnetExecutor.addNugetSource(value, key, decrypt(server.getUsername()), decrypt(server.getPassword()));
+            dotnetExecutor.updateNugetSource(value, key, decrypt(server.getUsername()), decrypt(server.getPassword()));
         }
 
     }

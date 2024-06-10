@@ -193,22 +193,31 @@ public record DotnetExecutor(
         execute(defaultOptions().mergeIgnoreResult(ignoreResult), parameters, Optional.ofNullable(apiKey).stream().collect(Collectors.toSet()));
     }
 
-    public void addNugetSource(String url, String sourceName, String username, String apiToken) throws MojoExecutionException {
+    public void updateNugetSource(String url, String sourceName, String username, String apiToken) throws MojoExecutionException {
 
-        // remove source in case it is already there...
-        execute(defaultOptions().ignoreResult().silent(), List.of("nuget", "remove", "source", sourceName), Set.of());
+//        // remove source in case it is already there...
+//        execute(defaultOptions().ignoreResult().silent(), List.of("nuget", "remove", "source", sourceName), Set.of());
 
-        List<String> parameters = new ArrayList<>(List.of("nuget", "add", "source", url, "--name", sourceName));
+        List<String> parameters = new ArrayList<>(List.of("nuget", "update", "source", sourceName));
+
+        if (url != null) {
+            parameters.add("--source");
+            parameters.add(url);
+        }
 
         if (username != null) {
             parameters.add("--username");
             parameters.add(username);
         }
 
+        /*
+        nuget update source "Eitco nexus" --username ${CI_NEXUS_USER} --password ${CI_NEXUS_PASSWORD} --store-password-in-clear-text
+         */
+
         if (apiToken != null) {
             parameters.add("--password");
             parameters.add(apiToken);
-            parameters.add("--store-password-in-clear-text");
+//            parameters.add("--store-password-in-clear-text");
         }
 
         execute(defaultOptions(), parameters, apiToken != null ? Set.of(apiToken) : Set.of());
