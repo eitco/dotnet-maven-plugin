@@ -1,5 +1,6 @@
 package de.eitco.cicd.dotnet;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Component;
@@ -10,6 +11,7 @@ import org.sonatype.plexus.components.sec.dispatcher.SecDispatcher;
 import org.sonatype.plexus.components.sec.dispatcher.SecDispatcherException;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 
 public abstract class AbstractDotnetMojo extends AbstractMojo {
@@ -37,6 +39,7 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
 
     @Parameter(defaultValue = "${settings}", readonly = true)
     protected Settings settings;
+
     @Parameter(defaultValue = "maven-nuget-local")
     protected String localMavenNugetRepositoryName;
 
@@ -59,18 +62,6 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
         );
     }
 
-
-    protected String findApiKey(String serverId) throws MojoExecutionException {
-
-        if (serverId == null) {
-
-            return null;
-        }
-
-        Server server = findServer(serverId);
-
-        return decrypt(server.getPassword());
-    }
 
     protected String decrypt(String text) throws MojoExecutionException {
         try {
@@ -96,5 +87,20 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
 
     protected File getLocalNugetRepository() {
         return new File(new File(settings.getLocalRepository()), "." + localMavenNugetRepositoryName);
+    }
+
+    protected File createLocalNugetRepoDirectory() throws MojoExecutionException {
+        try {
+
+            File localNugetRepository = getLocalNugetRepository();
+
+            FileUtils.forceMkdir(localNugetRepository);
+
+            return localNugetRepository;
+
+        } catch (IOException e) {
+
+            throw new MojoExecutionException(e);
+        }
     }
 }

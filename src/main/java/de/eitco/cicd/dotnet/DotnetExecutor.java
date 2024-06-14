@@ -16,7 +16,8 @@ public record DotnetExecutor(
         File workingDirectory,
         File executable,
         File targetDirectory,
-        String version, Log log,
+        String version,
+        Log log,
         boolean ignoreResult
 ) {
 
@@ -71,7 +72,6 @@ public record DotnetExecutor(
 
         try {
 
-
             log.info("Executing command: " + presentCommand(command, obfuscation));
 
             Process process = builder.start();
@@ -104,11 +104,6 @@ public record DotnetExecutor(
         command.addAll(parameters);
 
         return command;
-    }
-
-    private void retry(int times, String... parameters) throws MojoExecutionException {
-
-        retry(times, List.of(parameters));
     }
 
     private void retry(int times, List<String> parameters) throws MojoExecutionException {
@@ -197,7 +192,7 @@ public record DotnetExecutor(
 
         Set<String> obfuscation = apiToken != null ? Set.of(apiToken) : Set.of();
 
-        List<String> updateParameters = getUpsertParameters(username, apiToken,"nuget", "update", "source", sourceName, "--source", url);
+        List<String> updateParameters = getUpsertParameters(username, apiToken, "nuget", "update", "source", sourceName, "--source", url);
 
         int result = execute(defaultOptions().ignoreResult(), updateParameters, obfuscation);
 

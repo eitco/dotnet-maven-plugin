@@ -30,7 +30,7 @@ public class InstallMojo extends AbstractDotnetMojo {
             getLog().info("target directory is empty");
         }
 
-        File localNugetRepository = getLocalNugetRepository();
+        File localNugetRepository = createLocalNugetRepoDirectory();
 
         for (File file : files) {
 
