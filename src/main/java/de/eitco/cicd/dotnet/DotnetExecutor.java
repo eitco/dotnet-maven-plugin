@@ -16,7 +16,7 @@ public record DotnetExecutor(
         File workingDirectory,
         File executable,
         File targetDirectory,
-        Log log,
+        String version, Log log,
         boolean ignoreResult
 ) {
 
@@ -126,7 +126,7 @@ public record DotnetExecutor(
         execute(defaultOptions(), parameters, Set.of());
     }
 
-    public void build(String version, String assemblyVersion, String vendor, String configuration) throws MojoExecutionException {
+    public void build(String assemblyVersion, String vendor, String configuration) throws MojoExecutionException {
 
         List<String> parameters = new ArrayList<>(List.of("build", "-p:Version=" + version));
 
@@ -145,7 +145,7 @@ public record DotnetExecutor(
         retry(1, parameters);
     }
 
-    public void pack(String version, String vendor, String description, String repositoryUrl) throws MojoExecutionException {
+    public void pack(String vendor, String description, String repositoryUrl) throws MojoExecutionException {
 
         List<String> parameters = new ArrayList<>(List.of(
                 "pack",
@@ -235,6 +235,6 @@ public record DotnetExecutor(
 
     public void clean() throws MojoExecutionException {
 
-        execute("clean");
+        execute("clean", "-p:Version=" + version);
     }
 }

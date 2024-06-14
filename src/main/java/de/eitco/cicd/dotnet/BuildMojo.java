@@ -15,6 +15,6 @@ public class BuildMojo extends AbstractDotnetMojo {
     @Override
     public void execute() throws MojoExecutionException {
 
-        newExecutor().build(projectVersion, assemblyVersion, vendor, configurationName);
+        newExecutor().build(assemblyVersion, vendor, configurationName);
     }
 }

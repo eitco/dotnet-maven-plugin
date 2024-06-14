@@ -18,6 +18,6 @@ public class PackMojo extends AbstractDotnetMojo {
     @Override
     public void execute() throws MojoExecutionException {
 
-        newExecutor().pack(projectVersion, vendor, description, repositoryUrl);
+        newExecutor().pack(vendor, description, repositoryUrl);
     }
 }

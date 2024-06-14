@@ -53,6 +53,7 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
                 workingDirectory,
                 dotnetExecutable,
                 targetDirectory,
+                projectVersion,
                 getLog(),
                 ignoreResult
         );
