@@ -193,15 +193,31 @@ public record DotnetExecutor(
         execute(defaultOptions().mergeIgnoreResult(ignoreResult), parameters, Optional.ofNullable(apiKey).stream().collect(Collectors.toSet()));
     }
 
-    public void updateNugetSource(String url, String sourceName, String username, String apiToken) throws MojoExecutionException {
+    public void upsertNugetSource(String url, String sourceName, String username, String apiToken) throws MojoExecutionException {
 
-        List<String> parameters = new ArrayList<>(List.of("nuget", "update", "source", sourceName));
+        Set<String> obfuscation = apiToken != null ? Set.of(apiToken) : Set.of();
 
-        if (url != null) {
-            parameters.add("--source");
-            parameters.add(url);
+        List<String> updateParameters = getUpsertParameters(username, apiToken,"nuget", "update", "source", sourceName, "--source", url);
+
+        int result = execute(defaultOptions().ignoreResult(), updateParameters, obfuscation);
+
+        if (result != 0) {
+
+            List<String> addParameters = getUpsertParameters(username, apiToken, "nuget", "add", "source", url, "--name", sourceName);
+            execute(defaultOptions(), addParameters, obfuscation);
         }
+    }
 
+    private static List<String> getUpsertParameters(String userName, String apiToken, String... firstParameters) {
+
+        List<String> parameters = new ArrayList<>(List.of(firstParameters));
+
+        appendCredentials(userName, apiToken, parameters);
+
+        return parameters;
+    }
+
+    private static void appendCredentials(String username, String apiToken, List<String> parameters) {
         if (username != null) {
             parameters.add("--username");
             parameters.add(username);
@@ -215,8 +231,6 @@ public record DotnetExecutor(
                 parameters.add("--store-password-in-clear-text");
             }
         }
-
-        execute(defaultOptions(), parameters, apiToken != null ? Set.of(apiToken) : Set.of());
     }
 
     public void clean() throws MojoExecutionException {

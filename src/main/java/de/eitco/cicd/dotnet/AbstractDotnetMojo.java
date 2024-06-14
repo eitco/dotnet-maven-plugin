@@ -20,7 +20,7 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
     @Parameter
     protected File dotnetExecutable;
 
-    @Parameter(defaultValue = "${project.build.directory}")
+    @Parameter(defaultValue = "${project.build.directory}/dotnet")
     protected File targetDirectory;
 
     @Parameter(defaultValue = "${project.version}")
@@ -37,6 +37,8 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
 
     @Parameter(defaultValue = "${settings}", readonly = true)
     protected Settings settings;
+    @Parameter(defaultValue = "maven-nuget-local")
+    protected String localMavenNugetRepositoryName;
 
     @Component(hint = "dotnet-security")
     private SecDispatcher securityDispatcher;
@@ -89,5 +91,9 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
             throw new MojoExecutionException("server " + serverId + " not found");
         }
         return server;
+    }
+
+    protected File getLocalNugetRepository() {
+        return new File(new File(settings.getLocalRepository()), "." + localMavenNugetRepositoryName);
     }
 }

@@ -19,6 +19,7 @@
                             <package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:pack
                             </package>
+                            <install>${project.groupId}:${project.artifactId}:${project.version}:install</install>
                             <deploy>${project.groupId}:${project.artifactId}:${project.version}:push</deploy>
                         </phases>
                     </lifecycle>
