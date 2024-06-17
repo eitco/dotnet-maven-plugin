@@ -43,6 +43,15 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
     @Parameter(defaultValue = "maven-nuget-local")
     protected String localMavenNugetRepositoryName;
 
+    /**
+     * This parameter specifies custom properties given to dotnet via '-p:'. Keep in mind that the 'Version', 'Company',
+     * 'Description', 'RepositoryUrl' and 'AssemblyVersion' properties will be overwritten by their respective
+     * parameters, when specified.
+     *
+     */
+    @Parameter
+    protected Map<String, String> customProperties = Map.of();
+
     @Component(hint = "dotnet-security")
     private SecDispatcher securityDispatcher;
 
@@ -57,6 +66,7 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
                 dotnetExecutable,
                 targetDirectory,
                 projectVersion,
+                customProperties,
                 getLog(),
                 ignoreResult
         );

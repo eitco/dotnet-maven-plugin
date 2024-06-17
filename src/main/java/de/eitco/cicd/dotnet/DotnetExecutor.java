@@ -6,10 +6,7 @@ import org.apache.maven.plugin.logging.Log;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public record DotnetExecutor(
@@ -17,13 +14,14 @@ public record DotnetExecutor(
         File executable,
         File targetDirectory,
         String version,
+        Map<String, String> customProperties,
         Log log,
         boolean ignoreResult
 ) {
 
     public int execute(String... parameters) throws MojoExecutionException {
 
-        return execute(defaultOptions().mergeIgnoreResult(ignoreResult), List.of(parameters), Set.of());
+        return execute(defaultOptions().mergeIgnoreResult(ignoreResult), List.of(parameters), Set.of(), Map.of());
     }
 
     private static class ExecutionOptions {
@@ -53,13 +51,13 @@ public record DotnetExecutor(
         return new ExecutionOptions();
     }
 
-    private int execute(ExecutionOptions executionOptions, List<String> parameters, Set<String> obfuscation) throws MojoExecutionException {
+    private int execute(ExecutionOptions executionOptions, List<String> parameters, Set<String> obfuscation, Map<String, String> propertyOverrides) throws MojoExecutionException {
 
         ProcessBuilder builder = new ProcessBuilder();
 
         builder.directory(workingDirectory);
 
-        List<String> command = buildCommand(parameters);
+        List<String> command = buildCommand(parameters, propertyOverrides);
 
         builder.command(command);
 
@@ -95,7 +93,7 @@ public record DotnetExecutor(
         return command.stream().map(x -> obfuscation.contains(x) ? "****" : x).collect(Collectors.joining(" "));
     }
 
-    private List<String> buildCommand(List<String> parameters) {
+    private List<String> buildCommand(List<String> parameters, Map<String, String> propertyOverrides) {
 
         List<String> command = new ArrayList<>();
 
@@ -103,14 +101,23 @@ public record DotnetExecutor(
 
         command.addAll(parameters);
 
+        // propertyOverrides == null marks commands not supporting properties
+        if (propertyOverrides != null) {
+
+            Map<String, String> properties = new HashMap<>(customProperties);
+            properties.putAll(propertyOverrides);
+
+            properties.forEach((key, value) -> command.add("-p:" + key + "=" + value));
+        }
+
         return command;
     }
 
-    private void retry(int times, List<String> parameters) throws MojoExecutionException {
+    private void retry(int times, List<String> parameters, Set<String> obfuscation, Map<String, String> propertyOverrides) throws MojoExecutionException {
 
         for (int index = 0; index < times; index++) {
 
-            int returnCode = execute(defaultOptions().ignoreResult(), parameters, Set.of());
+            int returnCode = execute(defaultOptions().ignoreResult(), parameters, obfuscation, propertyOverrides);
 
             if (returnCode == 0) {
 
@@ -118,52 +125,57 @@ public record DotnetExecutor(
             }
         }
 
-        execute(defaultOptions(), parameters, Set.of());
+        execute(defaultOptions(), parameters, obfuscation, propertyOverrides);
     }
 
     public void build(String assemblyVersion, String vendor, String configuration) throws MojoExecutionException {
 
         List<String> parameters = new ArrayList<>(List.of("build", "-p:Version=" + version));
 
+        Map<String, String> propertyOverrides = new HashMap<>();
+
         if (assemblyVersion != null) {
-            parameters.add("-p:AssemblyVersion=" + assemblyVersion);
+            propertyOverrides.put("AssemblyVersion", assemblyVersion);
         }
 
         if (vendor != null) {
-            parameters.add("-p:Company=" + vendor);
+            propertyOverrides.put("Company", vendor);
         }
 
         if (configuration != null) {
             parameters.add("--configuration=" + configuration);
         }
 
-        retry(1, parameters);
+        retry(1, parameters, Set.of(), propertyOverrides);
     }
 
     public void pack(String vendor, String description, String repositoryUrl) throws MojoExecutionException {
 
         List<String> parameters = new ArrayList<>(List.of(
                 "pack",
-                "--no-build",
-                "-p:Version=" + version
+                "--no-build"
         ));
 
+        Map<String, String> propertyOverrides = new HashMap<>();
+
+        propertyOverrides.put("Version", version);
+
         if (vendor != null) {
-            parameters.add("-p:Company=" + vendor);
+            propertyOverrides.put("Company", vendor);
         }
 
         if (description != null) {
-            parameters.add("-p:Description=" + description);
+            propertyOverrides.put("Description", description);
         }
 
         if (repositoryUrl != null) {
-            parameters.add("-p:RepositoryUrl=" + repositoryUrl);
+            propertyOverrides.put("RepositoryUrl", repositoryUrl);
         }
 
         parameters.add("--output");
         parameters.add(targetDirectory.getPath());
 
-        execute(defaultOptions(), parameters, Set.of());
+        execute(defaultOptions(), parameters, Set.of(), propertyOverrides);
     }
 
     public int test(String logger, String testResultDirectory) throws MojoExecutionException {
@@ -185,21 +197,24 @@ public record DotnetExecutor(
             parameters.add(repository);
         }
 
-        execute(defaultOptions().mergeIgnoreResult(ignoreResult), parameters, Optional.ofNullable(apiKey).stream().collect(Collectors.toSet()));
+        execute(defaultOptions().mergeIgnoreResult(ignoreResult), parameters, Optional.ofNullable(apiKey).stream().collect(Collectors.toSet()), null);
     }
 
     public void upsertNugetSource(String url, String sourceName, String username, String apiToken) throws MojoExecutionException {
+
+        Objects.requireNonNull(url);
+        Objects.requireNonNull(sourceName);
 
         Set<String> obfuscation = apiToken != null ? Set.of(apiToken) : Set.of();
 
         List<String> updateParameters = getUpsertParameters(username, apiToken, "nuget", "update", "source", sourceName, "--source", url);
 
-        int result = execute(defaultOptions().ignoreResult(), updateParameters, obfuscation);
+        int result = execute(defaultOptions().ignoreResult(), updateParameters, obfuscation, null);
 
         if (result != 0) {
 
             List<String> addParameters = getUpsertParameters(username, apiToken, "nuget", "add", "source", url, "--name", sourceName);
-            execute(defaultOptions(), addParameters, obfuscation);
+            execute(defaultOptions(), addParameters, obfuscation, null);
         }
     }
 
@@ -230,6 +245,6 @@ public record DotnetExecutor(
 
     public void clean() throws MojoExecutionException {
 
-        execute("clean", "-p:Version=" + version);
+        execute(defaultOptions(), List.of("clean"), Set.of(), Map.of("Version", version));
     }
 }
