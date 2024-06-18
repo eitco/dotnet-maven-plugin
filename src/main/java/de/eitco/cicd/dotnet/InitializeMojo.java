@@ -26,9 +26,16 @@ public class InitializeMojo extends AbstractDotnetMojo {
             String key = entry.getKey();
             String value = entry.getValue();
 
-            Server server = findServer(key);
+            Server server = settings.getServer(key);
 
-            dotnetExecutor.upsertNugetSource(value, key, decrypt(server.getUsername()), decrypt(server.getPassword()), null);
+            if (server == null) {
+
+                dotnetExecutor.upsertNugetSource(value, key, null, null, null);
+
+            } else {
+
+                dotnetExecutor.upsertNugetSource(value, key, decrypt(server.getUsername()), decrypt(server.getPassword()), null);
+            }
         }
     }
 
