@@ -19,13 +19,13 @@ public class InstallMojo extends AbstractDotnetMojo {
 
         if (files == null) {
 
-            getLog().info("target directory does not exist");
+            getLog().debug("target directory does not exist");
             return;
         }
 
         if (files.length == 0) {
 
-            getLog().info("target directory is empty");
+            getLog().debug("target directory is empty");
         }
 
         File localNugetRepository = createLocalNugetRepositoryDirectory();

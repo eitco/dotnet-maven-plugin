@@ -242,11 +242,11 @@ public record DotnetExecutor(
 
     private void enforceConfigFileExists(File configFile) throws MojoExecutionException {
 
-        log.info("enforcing file " + configFile);
+        log.debug("enforcing file " + configFile);
 
         if (configFile.exists()) {
 
-            log.info(configFile + " exists");
+            log.debug(configFile + " exists");
             return;
         }
 
@@ -256,7 +256,7 @@ public record DotnetExecutor(
 
             byte[] bytes = resourceAsStream.readAllBytes();
 
-            log.info("writing " + new String(bytes, StandardCharsets.UTF_8) + "\n to file " + configFile);
+            log.debug("writing " + new String(bytes, StandardCharsets.UTF_8) + "\n to file " + configFile);
 
             Files.write(configFile.toPath(), bytes);
 

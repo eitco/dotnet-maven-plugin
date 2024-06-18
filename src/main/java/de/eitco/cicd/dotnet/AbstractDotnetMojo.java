@@ -135,7 +135,7 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
 
             File localNugetRepository = getResolvedNugetRepoDirectory();
 
-            getLog().info("creating directory " + localNugetRepository.getAbsolutePath());
+            getLog().debug("creating directory " + localNugetRepository.getAbsolutePath());
             FileUtils.forceMkdir(localNugetRepository);
 
             return localNugetRepository;
