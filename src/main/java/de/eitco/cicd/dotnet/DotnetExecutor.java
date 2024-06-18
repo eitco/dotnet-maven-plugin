@@ -284,7 +284,7 @@ public record DotnetExecutor(
 
                 } else {
 
-                    return new File(System.getProperty("HOME") + "/.nuget/NuGet/NuGet.Config");
+                    return new File(System.getenv("HOME") + "/.nuget/NuGet/NuGet.Config");
                 }
             case SYSTEM:
                 if (SystemUtils.IS_OS_WINDOWS) {
