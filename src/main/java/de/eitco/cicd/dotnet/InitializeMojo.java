@@ -18,7 +18,7 @@ public class InitializeMojo extends AbstractDotnetMojo {
 
         File localNugetRepository = createLocalNugetRepoDirectory();
 
-        dotnetExecutor.upsertNugetSource(localNugetRepository.getAbsolutePath(), localMavenNugetRepositoryName, null, null);
+        dotnetExecutor.upsertNugetSource(localNugetRepository.getPath(), localMavenNugetRepositoryName, null, null);
 
         for (Map.Entry<String, String> entry : nugetSources.entrySet()) {
             String key = entry.getKey();

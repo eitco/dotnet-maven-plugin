@@ -43,6 +43,9 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
     @Parameter(defaultValue = "maven-nuget-local")
     protected String localMavenNugetRepositoryName;
 
+    @Parameter(defaultValue = "${settings.localRepository}")
+    protected String localMavenNugetRepositoryBaseDirectory;
+
     /**
      * This parameter specifies custom properties given to dotnet via '-p:'. Keep in mind that the 'Version', 'Company',
      * 'Description', 'RepositoryUrl' and 'AssemblyVersion' properties will be overwritten by their respective
@@ -51,6 +54,9 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
      */
     @Parameter
     protected Map<String, String> customProperties = Map.of();
+
+    @Parameter
+    protected Map<String, String> environmentVariables = Map.of();
 
     @Component(hint = "dotnet-security")
     private SecDispatcher securityDispatcher;
@@ -67,6 +73,7 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
                 targetDirectory,
                 projectVersion,
                 customProperties,
+                environmentVariables,
                 getLog(),
                 ignoreResult
         );
@@ -95,18 +102,42 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
         return server;
     }
 
-    protected File getLocalNugetRepository() {
-        return new File(new File(settings.getLocalRepository()), "." + localMavenNugetRepositoryName);
+    protected File getResolvedNugetRepoDirectory() {
+
+        String baseDirectory = localMavenNugetRepositoryBaseDirectory;
+
+        for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+
+            String key = entry.getKey();
+            String value = entry.getValue();
+
+            baseDirectory = baseDirectory.replace("%" + key + "%", value);
+        }
+
+        for (Map.Entry<String, String> entry : environmentVariables.entrySet()) {
+
+            String key = entry.getKey();
+            String value = entry.getValue();
+
+            baseDirectory = baseDirectory.replace("%" + key + "%", value);
+        }
+
+        return getNugetRepoDirectory();
+    }
+
+    private File getNugetRepoDirectory() {
+
+        return new File(localMavenNugetRepositoryBaseDirectory, "." + localMavenNugetRepositoryName);
     }
 
     protected File createLocalNugetRepoDirectory() throws MojoExecutionException {
         try {
 
-            File localNugetRepository = getLocalNugetRepository();
+            File localNugetRepository = getResolvedNugetRepoDirectory();
 
             FileUtils.forceMkdir(localNugetRepository);
 
-            return localNugetRepository;
+            return getNugetRepoDirectory();
 
         } catch (IOException e) {
 

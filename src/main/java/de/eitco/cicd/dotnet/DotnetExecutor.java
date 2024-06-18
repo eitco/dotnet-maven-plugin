@@ -15,6 +15,7 @@ public record DotnetExecutor(
         File targetDirectory,
         String version,
         Map<String, String> customProperties,
+        Map<String, String> environment,
         Log log,
         boolean ignoreResult
 ) {
@@ -67,6 +68,8 @@ public record DotnetExecutor(
         }
 
         builder.environment().put("DOTNET_CLI_TELEMETRY_OPTOUT", "TRUE");
+
+        environment.forEach((key, value) -> builder.environment().put(key, value));
 
         try {
 
