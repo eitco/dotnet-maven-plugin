@@ -49,7 +49,7 @@ public class NugetPushMojo extends AbstractDotnetMojo {
 
             repository = usedRepositoryName;
 
-            dotnetExecutor.upsertNugetSource(repositoryUrl, usedRepositoryName, nugetServerUser, apiKey);
+            dotnetExecutor.upsertNugetSource(repositoryUrl, usedRepositoryName, nugetServerUser, apiKey, null);
         }
 
         dotnetExecutor.push(apiKey, repository);
