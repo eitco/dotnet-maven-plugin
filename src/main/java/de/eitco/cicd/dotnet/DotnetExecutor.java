@@ -9,6 +9,7 @@ import org.apache.maven.plugin.logging.Log;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -239,10 +240,13 @@ public record DotnetExecutor(
         }
     }
 
-    private static void enforceConfigFileExists(File configFile) throws MojoExecutionException {
+    private void enforceConfigFileExists(File configFile) throws MojoExecutionException {
+
+        log.info("enforcing file " + configFile);
 
         if (configFile.exists()) {
 
+            log.info(configFile + " exists");
             return;
         }
 
@@ -251,6 +255,8 @@ public record DotnetExecutor(
             FileUtils.forceMkdir(configFile.getParentFile());
 
             byte[] bytes = resourceAsStream.readAllBytes();
+
+            log.info("writing " + new String(bytes, StandardCharsets.UTF_8) + "\n to file " + configFile);
 
             Files.write(configFile.toPath(), bytes);
 
