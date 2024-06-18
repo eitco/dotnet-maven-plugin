@@ -50,7 +50,6 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
      * This parameter specifies custom properties given to dotnet via '-p:'. Keep in mind that the 'Version', 'Company',
      * 'Description', 'RepositoryUrl' and 'AssemblyVersion' properties will be overwritten by their respective
      * parameters, when specified.
-     *
      */
     @Parameter
     protected Map<String, String> customProperties = Map.of();
@@ -122,7 +121,7 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
             baseDirectory = baseDirectory.replace("%" + key + "%", value);
         }
 
-        return getNugetRepoDirectory();
+        return new File(baseDirectory, "." + localMavenNugetRepositoryName);
     }
 
     private File getNugetRepoDirectory() {
@@ -131,11 +130,12 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
     }
 
     protected File createLocalNugetRepoDirectory() throws MojoExecutionException {
+
         try {
 
             File localNugetRepository = getResolvedNugetRepoDirectory();
 
-            getLog().info("creating directory " +localNugetRepository.getAbsolutePath());
+            getLog().info("creating directory " + localNugetRepository.getAbsolutePath());
             FileUtils.forceMkdir(localNugetRepository);
 
             return getNugetRepoDirectory();
