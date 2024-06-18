@@ -1,12 +1,15 @@
 package de.eitco.cicd.dotnet;
 
 import com.google.common.base.Strings;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -20,6 +23,8 @@ public record DotnetExecutor(
         Log log,
         boolean ignoreResult
 ) {
+
+    public static final String DEFAULT_NUGET_CONFIG = "default.nuget.config";
 
     public int execute(String... parameters) throws MojoExecutionException {
 
@@ -216,6 +221,13 @@ public record DotnetExecutor(
 
         Set<String> obfuscation = apiToken != null ? Set.of(apiToken) : Set.of();
 
+        File configFile = getConfigFile(configLocation);
+
+        if (configFile != null) {
+
+            enforceConfigFileExists(configFile);
+        }
+
         List<String> updateParameters = getUpsertParameters(username, apiToken, configLocation, "nuget", "update", "source", sourceName, "--source", url);
 
         int result = execute(defaultOptions().ignoreResult(), updateParameters, obfuscation, null);
@@ -227,59 +239,86 @@ public record DotnetExecutor(
         }
     }
 
+    private static void enforceConfigFileExists(File configFile) throws MojoExecutionException {
+
+        if (configFile.exists()) {
+
+            return;
+        }
+
+        try (InputStream resourceAsStream = DotnetExecutor.class.getClassLoader().getResourceAsStream(DEFAULT_NUGET_CONFIG)) {
+
+            FileUtils.forceMkdir(configFile.getParentFile());
+
+            byte[] bytes = resourceAsStream.readAllBytes();
+
+            Files.write(configFile.toPath(), bytes);
+
+        } catch (IOException e) {
+
+            throw new MojoExecutionException(e);
+        }
+
+    }
+
+    private static File getConfigFile(NugetConfigLocation configLocation) {
+
+        if (configLocation == null) {
+
+            return null;
+        }
+
+        switch (configLocation) {
+            case PROJECT:
+                return new File("nuget.config");
+            case USER:
+                if (SystemUtils.IS_OS_WINDOWS) {
+
+                    return new File(System.getenv("appdata") + "\\NuGet\\NuGet.Config");
+
+                } else {
+
+                    return new File(System.getProperty("HOME") + "/.nuget/NuGet/NuGet.Config");
+                }
+            case SYSTEM:
+                if (SystemUtils.IS_OS_WINDOWS) {
+
+                    return new File(System.getenv("ProgramFiles(x86)") + "\\NuGet\\Config\\Nuget.Config");
+
+                } else {
+
+                    String customAppData = System.getenv("NUGET_COMMON_APPLICATION_DATA");
+
+                    if (Strings.isNullOrEmpty(customAppData)) {
+
+                        if (SystemUtils.IS_OS_LINUX) {
+
+                            return new File("/etc/opt/NuGet/Config/NuGet.Config");
+
+                        } else {
+
+                            return new File("/Library/Application Support/NuGet.Config");
+                        }
+                    } else {
+
+                        return new File(customAppData + "/NuGet/Config/NuGet.Config");
+                    }
+                }
+        }
+
+        throw new IllegalStateException();
+    }
+
     private static List<String> getUpsertParameters(String userName, String apiToken, NugetConfigLocation configLocation, String... firstParameters) {
 
         List<String> parameters = new ArrayList<>(List.of(firstParameters));
 
-        if (configLocation == NugetConfigLocation.PROJECT) {
+        File configFile = getConfigFile(configLocation);
+
+        if (configFile != null) {
 
             parameters.add("--configfile");
-            parameters.add("NuGet.Config");
-        }
-
-        if (configLocation == NugetConfigLocation.USER) {
-
-            parameters.add("--configfile");
-
-            if (SystemUtils.IS_OS_WINDOWS) {
-
-                parameters.add(System.getenv("appdata") + "\\NuGet\\NuGet.Config");
-
-            } else {
-
-                parameters.add("~/.nuget/NuGet/NuGet.Config");
-            }
-        }
-
-        if (configLocation == NugetConfigLocation.SYSTEM) {
-
-            parameters.add("--configfile");
-
-            if (SystemUtils.IS_OS_WINDOWS) {
-
-                parameters.add(System.getenv("ProgramFiles(x86)") + "\\NuGet\\Config\\Nuget.Config");
-
-            } else {
-
-                String customAppData = System.getenv("NUGET_COMMON_APPLICATION_DATA");
-
-                if (Strings.isNullOrEmpty(customAppData)) {
-
-                    if (SystemUtils.IS_OS_LINUX) {
-
-                        parameters.add("/etc/opt/NuGet/Config/NuGet.Config");
-
-                    } else {
-
-                        parameters.add("/Library/Application Support/NuGet.Config");
-                    }
-                } else {
-
-                    parameters.add(customAppData + "/NuGet/Config/NuGet.Config");
-                }
-
-            }
-
+            parameters.add(configFile.getPath());
         }
 
         appendCredentials(userName, apiToken, parameters);
