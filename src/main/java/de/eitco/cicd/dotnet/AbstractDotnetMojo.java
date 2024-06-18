@@ -124,12 +124,12 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
         return new File(baseDirectory, "." + localMavenNugetRepositoryName);
     }
 
-    private File getNugetRepoDirectory() {
+    protected File getUnresolvedLocalNugetRepositoryDirectory() {
 
         return new File(localMavenNugetRepositoryBaseDirectory, "." + localMavenNugetRepositoryName);
     }
 
-    protected File createLocalNugetRepoDirectory() throws MojoExecutionException {
+    protected File createLocalNugetRepositoryDirectory() throws MojoExecutionException {
 
         try {
 
@@ -138,7 +138,7 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
             getLog().info("creating directory " + localNugetRepository.getAbsolutePath());
             FileUtils.forceMkdir(localNugetRepository);
 
-            return getNugetRepoDirectory();
+            return localNugetRepository;
 
         } catch (IOException e) {
 

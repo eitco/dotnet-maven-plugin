@@ -16,9 +16,11 @@ public class InitializeMojo extends AbstractDotnetMojo {
 
         DotnetExecutor dotnetExecutor = newExecutor();
 
-        File localNugetRepository = createLocalNugetRepoDirectory();
+        createLocalNugetRepositoryDirectory();
 
-        dotnetExecutor.upsertNugetSource(localNugetRepository.getPath(), localMavenNugetRepositoryName, null, null);
+        File localNugetRepository = getUnresolvedLocalNugetRepositoryDirectory();
+
+        dotnetExecutor.upsertNugetSource(localNugetRepository.getPath(), localMavenNugetRepositoryName, null, null, null);
 
         for (Map.Entry<String, String> entry : nugetSources.entrySet()) {
             String key = entry.getKey();
@@ -26,7 +28,7 @@ public class InitializeMojo extends AbstractDotnetMojo {
 
             Server server = findServer(key);
 
-            dotnetExecutor.upsertNugetSource(value, key, decrypt(server.getUsername()), decrypt(server.getPassword()));
+            dotnetExecutor.upsertNugetSource(value, key, decrypt(server.getUsername()), decrypt(server.getPassword()), null);
         }
     }
 

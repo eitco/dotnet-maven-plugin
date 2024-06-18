@@ -1,13 +1,11 @@
 package de.eitco.cicd.dotnet;
 
-import com.sun.nio.file.ExtendedCopyOption;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
@@ -30,7 +28,7 @@ public class InstallMojo extends AbstractDotnetMojo {
             getLog().info("target directory is empty");
         }
 
-        File localNugetRepository = createLocalNugetRepoDirectory();
+        File localNugetRepository = createLocalNugetRepositoryDirectory();
 
         for (File file : files) {
 

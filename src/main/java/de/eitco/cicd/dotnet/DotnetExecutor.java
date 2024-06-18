@@ -1,5 +1,6 @@
 package de.eitco.cicd.dotnet;
 
+import com.google.common.base.Strings;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
@@ -203,27 +204,83 @@ public record DotnetExecutor(
         execute(defaultOptions().mergeIgnoreResult(ignoreResult), parameters, Optional.ofNullable(apiKey).stream().collect(Collectors.toSet()), null);
     }
 
-    public void upsertNugetSource(String url, String sourceName, String username, String apiToken) throws MojoExecutionException {
+    public enum NugetConfigLocation {
+
+        PROJECT, USER, SYSTEM
+    }
+
+    public void upsertNugetSource(String url, String sourceName, String username, String apiToken, NugetConfigLocation configLocation) throws MojoExecutionException {
 
         Objects.requireNonNull(url);
         Objects.requireNonNull(sourceName);
 
         Set<String> obfuscation = apiToken != null ? Set.of(apiToken) : Set.of();
 
-        List<String> updateParameters = getUpsertParameters(username, apiToken, "nuget", "update", "source", sourceName, "--source", url);
+        List<String> updateParameters = getUpsertParameters(username, apiToken, configLocation, "nuget", "update", "source", sourceName, "--source", url);
 
         int result = execute(defaultOptions().ignoreResult(), updateParameters, obfuscation, null);
 
         if (result != 0) {
 
-            List<String> addParameters = getUpsertParameters(username, apiToken, "nuget", "add", "source", url, "--name", sourceName);
+            List<String> addParameters = getUpsertParameters(username, apiToken, configLocation, "nuget", "add", "source", url, "--name", sourceName);
             execute(defaultOptions(), addParameters, obfuscation, null);
         }
     }
 
-    private static List<String> getUpsertParameters(String userName, String apiToken, String... firstParameters) {
+    private static List<String> getUpsertParameters(String userName, String apiToken, NugetConfigLocation configLocation, String... firstParameters) {
 
         List<String> parameters = new ArrayList<>(List.of(firstParameters));
+
+        if (configLocation == NugetConfigLocation.PROJECT) {
+
+            parameters.add("--configfile");
+            parameters.add("NuGet.Config");
+        }
+
+        if (configLocation == NugetConfigLocation.USER) {
+
+            parameters.add("--configfile");
+
+            if (SystemUtils.IS_OS_WINDOWS) {
+
+                parameters.add(System.getenv("appdata") + "\\NuGet\\NuGet.Config");
+
+            } else {
+
+                parameters.add("~/.nuget/NuGet/NuGet.Config");
+            }
+        }
+
+        if (configLocation == NugetConfigLocation.SYSTEM) {
+
+            parameters.add("--configfile");
+
+            if (SystemUtils.IS_OS_WINDOWS) {
+
+                parameters.add(System.getenv("ProgramFiles(x86)") + "\\NuGet\\Config\\Nuget.Config");
+
+            } else {
+
+                String customAppData = System.getenv("NUGET_COMMON_APPLICATION_DATA");
+
+                if (Strings.isNullOrEmpty(customAppData)) {
+
+                    if (SystemUtils.IS_OS_LINUX) {
+
+                        parameters.add("/etc/opt/NuGet/Config/NuGet.Config");
+
+                    } else {
+
+                        parameters.add("/Library/Application Support/NuGet.Config");
+                    }
+                } else {
+
+                    parameters.add(customAppData + "/NuGet/Config/NuGet.Config");
+                }
+
+            }
+
+        }
 
         appendCredentials(userName, apiToken, parameters);
 
