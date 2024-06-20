@@ -37,20 +37,26 @@ public record DotnetExecutor(
         private boolean inheritIo = true;
 
         public ExecutionOptions ignoreResult() {
-            ignoreResult = true;
-            return this;
+
+            ExecutionOptions result = new ExecutionOptions();
+            result.inheritIo = inheritIo;
+            result.ignoreResult = true;
+            return result;
         }
 
         public ExecutionOptions silent() {
-            inheritIo = false;
-            return this;
+            ExecutionOptions result = new ExecutionOptions();
+            result.inheritIo = false;
+            result.ignoreResult = ignoreResult;
+            return result;
         }
 
         public ExecutionOptions mergeIgnoreResult(boolean ignoreResult) {
+            ExecutionOptions result = new ExecutionOptions();
+            result.inheritIo = inheritIo;
+            result.ignoreResult = ignoreResult || this.ignoreResult;
 
-            this.ignoreResult = ignoreResult || this.ignoreResult;
-
-            return this;
+            return result;
         }
     }
 
@@ -123,11 +129,11 @@ public record DotnetExecutor(
         return command;
     }
 
-    private void retry(int times, List<String> parameters, Set<String> obfuscation, Map<String, String> propertyOverrides) throws MojoExecutionException {
+    private void retry(int times, ExecutionOptions executionOptions, List<String> parameters, Set<String> obfuscation, Map<String, String> propertyOverrides) throws MojoExecutionException {
 
         for (int index = 0; index < times; index++) {
 
-            int returnCode = execute(defaultOptions().ignoreResult(), parameters, obfuscation, propertyOverrides);
+            int returnCode = execute(executionOptions.ignoreResult(), parameters, obfuscation, propertyOverrides);
 
             if (returnCode == 0) {
 
@@ -135,7 +141,7 @@ public record DotnetExecutor(
             }
         }
 
-        execute(defaultOptions(), parameters, obfuscation, propertyOverrides);
+        execute(executionOptions, parameters, obfuscation, propertyOverrides);
     }
 
     public void build(String assemblyVersion, String vendor, String configuration) throws MojoExecutionException {
@@ -156,7 +162,7 @@ public record DotnetExecutor(
             parameters.add("--configuration=" + configuration);
         }
 
-        retry(1, parameters, Set.of(), propertyOverrides);
+        retry(1, defaultOptions(), parameters, Set.of(), propertyOverrides);
     }
 
     public void pack(String vendor, String description, String repositoryUrl) throws MojoExecutionException {
@@ -350,6 +356,7 @@ public record DotnetExecutor(
 
     public void clean() throws MojoExecutionException {
 
-        execute(defaultOptions(), List.of("clean"), Set.of(), Map.of("Version", version));
+        retry(1, defaultOptions().ignoreResult(), List.of("clean"), Set.of(), Map.of("Version", version));
+
     }
 }
