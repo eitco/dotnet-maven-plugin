@@ -81,7 +81,6 @@
             <plugin>
                 <artifactId>maven-invoker-plugin</artifactId>
                 <configuration>
-<!--                    <debug>true</debug>-->
                     <showErrors>true</showErrors>
                     <streamLogsOnFailures>true</streamLogsOnFailures>
                 </configuration>
