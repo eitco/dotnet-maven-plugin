@@ -27,8 +27,8 @@
                         <id>clean</id>
                         <phases>
                             <clean>
-                                ${project.groupId}:${project.artifactId}:${project.version}:clean,
-                                org.apache.maven.plugins:maven-clean-plugin:${maven-clean-plugin.version}:clean
+                                org.apache.maven.plugins:maven-clean-plugin:${maven-clean-plugin.version}:clean,
+                                ${project.groupId}:${project.artifactId}:${project.version}:clean
                             </clean>
                         </phases>
                     </lifecycle>

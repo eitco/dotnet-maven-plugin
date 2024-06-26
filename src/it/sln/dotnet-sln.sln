@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2BFDB311-CC4D-4E77-B9DF-6C7239442D8B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "main", "main", "{BA24A498-4714-4223-B220-B7E3697475DB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "productive", "src\main\cs\productive.csproj", "{AF2343B5-1825-4DFF-B6B9-3A17DA40DB38}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{EA89E297-E8E5-4B97-9953-0A5FA32D50B9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test", "src\test\cs\test.csproj", "{24E0ADF5-7597-472E-9F7C-282B0D6D4112}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AF2343B5-1825-4DFF-B6B9-3A17DA40DB38}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF2343B5-1825-4DFF-B6B9-3A17DA40DB38}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF2343B5-1825-4DFF-B6B9-3A17DA40DB38}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF2343B5-1825-4DFF-B6B9-3A17DA40DB38}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24E0ADF5-7597-472E-9F7C-282B0D6D4112}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24E0ADF5-7597-472E-9F7C-282B0D6D4112}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24E0ADF5-7597-472E-9F7C-282B0D6D4112}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24E0ADF5-7597-472E-9F7C-282B0D6D4112}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{BA24A498-4714-4223-B220-B7E3697475DB} = {2BFDB311-CC4D-4E77-B9DF-6C7239442D8B}
+		{AF2343B5-1825-4DFF-B6B9-3A17DA40DB38} = {BA24A498-4714-4223-B220-B7E3697475DB}
+		{EA89E297-E8E5-4B97-9953-0A5FA32D50B9} = {2BFDB311-CC4D-4E77-B9DF-6C7239442D8B}
+		{24E0ADF5-7597-472E-9F7C-282B0D6D4112} = {EA89E297-E8E5-4B97-9953-0A5FA32D50B9}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4B20F6E5-6534-438B-9FC6-8085C3E0EFA1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "main", "main", "{12E0FD4A-9808-47D0-994D-1595C74DC0F9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dependency", "src\main\cs\dependency.csproj", "{C51B1D9F-2E38-4647-81A5-7E63AE545717}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{50621265-6679-400B-83D1-177D14244CC2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dependency-test", "src\test\cs\dependency-test.csproj", "{71A97C3F-E252-4AF4-BB52-5050899FC2A3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C51B1D9F-2E38-4647-81A5-7E63AE545717}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C51B1D9F-2E38-4647-81A5-7E63AE545717}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C51B1D9F-2E38-4647-81A5-7E63AE545717}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C51B1D9F-2E38-4647-81A5-7E63AE545717}.Release|Any CPU.Build.0 = Release|Any CPU
+		{71A97C3F-E252-4AF4-BB52-5050899FC2A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71A97C3F-E252-4AF4-BB52-5050899FC2A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71A97C3F-E252-4AF4-BB52-5050899FC2A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71A97C3F-E252-4AF4-BB52-5050899FC2A3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{12E0FD4A-9808-47D0-994D-1595C74DC0F9} = {4B20F6E5-6534-438B-9FC6-8085C3E0EFA1}
+		{C51B1D9F-2E38-4647-81A5-7E63AE545717} = {12E0FD4A-9808-47D0-994D-1595C74DC0F9}
+		{50621265-6679-400B-83D1-177D14244CC2} = {4B20F6E5-6534-438B-9FC6-8085C3E0EFA1}
+		{71A97C3F-E252-4AF4-BB52-5050899FC2A3} = {50621265-6679-400B-83D1-177D14244CC2}
+	EndGlobalSection
+EndGlobal

@@ -25,7 +25,7 @@ public class TestMojo extends AbstractDotnetMojo {
     public static final String TEST_RESULT_EXTENSION = "trx";
     public static final String XSL_TRANSFORMATION = "xunit-to-junit.xsl";
 
-    @Parameter(defaultValue = "false")
+    @Parameter(defaultValue = "false", property = "skipTests")
     private boolean skipTests;
 
     @Parameter(defaultValue = "target/test-results")
@@ -47,7 +47,6 @@ public class TestMojo extends AbstractDotnetMojo {
         int result = newExecutor(true).test(TEST_RESULT_EXTENSION, testResultDirectory.getPath());
 
         transformResultFiles();
-
 
         if (REACTOR_FAILURE_BEHAVIOR_FAIL_NEVER.equals(session.getReactorFailureBehavior())) {
 

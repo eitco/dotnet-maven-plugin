@@ -78,6 +78,9 @@
             <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
             </plugin>
+            <plugin>
+                <artifactId>maven-invoker-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
 
