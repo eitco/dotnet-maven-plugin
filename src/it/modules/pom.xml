@@ -9,10 +9,10 @@
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <modules>
-        <module>dependency</module>
-        <module>dependent</module>
-    </modules>
+<!--    <modules>-->
+<!--        <module>dependency</module>-->
+<!--        <module>dependent</module>-->
+<!--    </modules>-->
 
     <build>
         <pluginManagement>
