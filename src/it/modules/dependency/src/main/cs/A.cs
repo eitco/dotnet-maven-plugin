@@ -1,4 +1,4 @@
-namespace de.eitco.cicd.test;
+namespace de.eitco.cicd.test.dependency;
 
 public class A : IA {
 
