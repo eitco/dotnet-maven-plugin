@@ -2,6 +2,7 @@ package de.eitco.cicd.dotnet;
 
 import com.google.common.base.Strings;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
@@ -12,6 +13,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public record DotnetExecutor(
@@ -26,6 +29,7 @@ public record DotnetExecutor(
 ) {
 
     public static final String DEFAULT_NUGET_CONFIG = "default.nuget.config";
+    public static final Pattern LOCALS_PATTERN = Pattern.compile("\\s*global-packages:\\s*(?<directory>.*)\\s*");
 
     public int execute(String... parameters) throws MojoExecutionException {
 
@@ -80,7 +84,7 @@ public record DotnetExecutor(
             builder.inheritIO();
         }
 
-        builder.environment().put("DOTNET_CLI_TELEMETRY_OPTOUT", "TRUE");
+        optOut(builder);
 
         environment.forEach((key, value) -> builder.environment().put(key, value));
 
@@ -102,6 +106,10 @@ public record DotnetExecutor(
         } catch (IOException | InterruptedException e) {
             throw new MojoExecutionException(e);
         }
+    }
+
+    private static void optOut(ProcessBuilder builder) {
+        builder.environment().put("DOTNET_CLI_TELEMETRY_OPTOUT", "TRUE");
     }
 
     private static String presentCommand(List<String> command, Set<String> obfuscation) {
@@ -357,6 +365,46 @@ public record DotnetExecutor(
     public void clean() throws MojoExecutionException {
 
         retry(1, defaultOptions().ignoreResult(), List.of("clean"), Set.of(), Map.of("Version", version));
-
     }
+
+    public String getLocalArtifactCache() throws MojoExecutionException {
+
+        ProcessBuilder builder = new ProcessBuilder();
+        optOut(builder);
+
+        builder.command(buildCommand(List.of("nuget", "locals", "global-packages", "--list"), Map.of()));
+
+        try {
+
+            Process process = builder.start();
+
+            int exitCode = process.waitFor();
+
+            if (exitCode != 0) {
+
+                String errorOut = IOUtils.toString(process.getErrorStream(), StandardCharsets.UTF_8);
+                String stdOut = IOUtils.toString(process.getInputStream(), StandardCharsets.UTF_8);
+                log.error(stdOut + "\n" + errorOut);
+
+                throw new MojoExecutionException("Cannot get nuget cache for global packages - process exited with code " + exitCode);
+            }
+
+            String stdOut = IOUtils.toString(process.getInputStream(), StandardCharsets.UTF_8);
+
+            Matcher matcher = LOCALS_PATTERN.matcher(stdOut);
+
+            if (!matcher.matches()) {
+
+                throw new MojoExecutionException("Cannot get nuget cache for global packages - output does not match expected pattern: " + stdOut);
+            }
+
+            return matcher.group("directory");
+
+
+        } catch (IOException | InterruptedException e) {
+
+            throw new MojoExecutionException(e);
+        }
+    }
+
 }
