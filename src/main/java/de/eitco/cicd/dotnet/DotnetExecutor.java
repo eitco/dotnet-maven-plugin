@@ -121,7 +121,7 @@ public record DotnetExecutor(
 
         List<String> command = new ArrayList<>();
 
-        command.add(executable == null ? (SystemUtils.IS_OS_WINDOWS ? "dotnet.exe" : "dotnet") : executable.getPath());
+        prepareCommand(command);
 
         command.addAll(parameters);
 
@@ -135,6 +135,10 @@ public record DotnetExecutor(
         }
 
         return command;
+    }
+
+    private void prepareCommand(List<String> command) {
+        command.add(executable == null ? (SystemUtils.IS_OS_WINDOWS ? "dotnet.exe" : "dotnet") : executable.getPath());
     }
 
     private void retry(int times, ExecutionOptions executionOptions, List<String> parameters, Set<String> obfuscation, Map<String, String> propertyOverrides) throws MojoExecutionException {
@@ -372,7 +376,8 @@ public record DotnetExecutor(
         ProcessBuilder builder = new ProcessBuilder();
         optOut(builder);
 
-        builder.command(buildCommand(List.of("nuget", "locals", "global-packages", "--list"), Map.of()));
+        prepareCommand(builder.command());
+        builder.command().addAll(List.of("nuget", "locals", "global-packages", "--list"));
 
         try {
 
