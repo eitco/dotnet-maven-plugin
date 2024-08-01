@@ -10,10 +10,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
+/**
+ * This goal assumes the builds delivery artifacts to be located in the directory denoted by the goals
+ * `targetDirectory` parameter. It will simply copy all *.nupkg files located there to directory configured
+ * to be the local nuget directory.
+ */
 @Mojo(name = "install", defaultPhase = LifecyclePhase.INSTALL)
 public class InstallMojo extends AbstractDotnetMojo {
 
     public static final String NUPKG_SUFFIX = ".nupkg";
+
     private static File globalsCacheDirectory;
 
     @Override

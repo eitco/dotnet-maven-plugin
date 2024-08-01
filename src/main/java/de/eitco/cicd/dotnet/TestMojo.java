@@ -18,6 +18,12 @@ import java.io.InputStream;
 import java.util.Objects;
 
 
+/**
+ * This goal calls {@code dotnet test} to execute test. It will add the command line parameter {@code --no-build},
+ * since the {@code compile} phase will already be called before the {@code test} phase. It will always configure
+ * the {@code trx} logger and transform the results to a valid {@code junit} description - enabling ci servers to
+ * collect the test results in the default format for maven builds. The goal will honour the reactors failure behaviour.
+ */
 @Mojo(name = "test", defaultPhase = LifecyclePhase.TEST)
 public class TestMojo extends AbstractDotnetMojo {
 
@@ -25,9 +31,16 @@ public class TestMojo extends AbstractDotnetMojo {
     public static final String TEST_RESULT_EXTENSION = "trx";
     public static final String XSL_TRANSFORMATION = "xunit-to-junit.xsl";
 
+    /**
+     * This parameter specifies whether to skip the tests. Note that its property is the maven default property to
+     * skip tests.
+     */
     @Parameter(defaultValue = "false", property = "skipTests")
     private boolean skipTests;
 
+    /**
+     * This parameter specifies the directory where to write the test results to
+     */
     @Parameter(defaultValue = "target/test-results")
     private File testResultDirectory;
 

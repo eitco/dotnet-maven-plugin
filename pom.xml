@@ -3,9 +3,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>de.eitco</groupId>
+        <groupId>de.eitco.cicd</groupId>
         <artifactId>eitco-oss-parent</artifactId>
-        <version>0.0.14</version>
+        <version>0.0.15</version>
     </parent>
 
 
@@ -31,6 +31,7 @@
         <developerConnection>scm:git:https://github.com/eitco/dotnet-maven-plugin.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
+
     <properties>
         <maven-clean-plugin.version>3.3.2</maven-clean-plugin.version>
     </properties>
@@ -74,23 +75,46 @@
         <plugins>
             <plugin>
                 <artifactId>maven-release-plugin</artifactId>
+                <configuration>
+                    <goals>deploy site site:stage scm-publish:publish-scm</goals>
+                </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
             </plugin>
             <plugin>
                 <artifactId>maven-invoker-plugin</artifactId>
-                <configuration>
-<!--                    <debug>true</debug>-->
-                    <showErrors>true</showErrors>
-                    <streamLogsOnFailures>true</streamLogsOnFailures>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>license-maven-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-scm-publish-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
+
+    <reporting>
+        <excludeDefaults>true</excludeDefaults>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-plugin-report-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </reporting>
+
+    <distributionManagement>
+        <site>
+            <id>github</id>
+            <url>scm:git:https://github.com/eitco/eitco.github.io.git</url>
+        </site>
+    </distributionManagement>
 
 </project>

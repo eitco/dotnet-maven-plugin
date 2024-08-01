@@ -7,25 +7,49 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.settings.Server;
 
+/**
+ * This goal calls {@code nuget push} on every nupgk file located in the configured
+ * {@code targetDirectory}.
+ */
 @Mojo(name = "push", defaultPhase = LifecyclePhase.DEPLOY)
 public class NugetPushMojo extends AbstractDotnetMojo {
 
+    /**
+     * This parameter specifies the id of the nuget server to push to. This id is used to find the
+     * corresponding {@code <server>} entry in the {@code settings.xml} for authentication.
+     */
     @Parameter(defaultValue = "nuget-server")
     protected String nugetServerId;
+
+    /**
+     * This parameter specifies the url of the nuget server to push to.
+     */
     @Parameter
     private String nugetServerUrl;
 
+    /**
+     * This parameter specifies an alternative url of a server to push to which is only used
+     * if the current version is a snapshot version.
+     */
     @Parameter
     private String nugetSnapshotServerUrl;
 
-    @Parameter(defaultValue = "${project}", readonly = true)
-    protected MavenProject project;
-
+    /**
+     * If set to {@code true} this parameter forces the configured target server to be added as
+     * a nuget source.
+     */
     @Parameter
     private Boolean forceAddSource;
 
+    /**
+     * This parameter specifies the repository name that is used when added as nuget source. If
+     * it is not specified it defaults to {@link #nugetServerId}.
+     */
     @Parameter
     private String repositoryName;
+
+    @Parameter(defaultValue = "${project}", readonly = true)
+    protected MavenProject project;
 
     @Override
     public void execute() throws MojoExecutionException {

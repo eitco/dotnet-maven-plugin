@@ -8,6 +8,10 @@ import org.apache.maven.settings.Server;
 import java.io.File;
 import java.util.Map;
 
+/**
+ * This goal registers nuget source repositories. A special one that helps mimic mavens local repository
+ * and additionally all repositories that are configured.
+ */
 @Mojo(name = "initialize", defaultPhase = LifecyclePhase.INITIALIZE)
 public class InitializeMojo extends AbstractDotnetMojo {
 

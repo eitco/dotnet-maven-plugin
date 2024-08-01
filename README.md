@@ -104,7 +104,7 @@ can be overridden with the `<localMavenNugetRepositoryName>` and `<localMavenNug
 
 ## build
 
-The `build` goal is bound to the `compile` phase. It will call `dotnet build` on the current project. Be that a .sln 
+The `build` goal is bound to the `compile` phase. It will call `dotnet build` on the current project, be that a .sln 
 or .csproj file. It will always add the command line option `-p:Version=<projectVersion>` with `projectVersion` being 
 the goals parameter of the same name. This way the version of the build artifacts are managed in the pom.
 
@@ -144,3 +144,8 @@ custom `clean` goal is called, which simply calls `dotnet clean`
 # examples
 
 Examples can be found with the [integration tests](src/it)
+
+# opt out
+
+When calling `dotnet` this plugin will always set the environment variable `DOTNET_CLI_TELEMETRY_OPTOUT` to `TRUE` if 
+not overwritten by the `environmentVariables` parameter.
