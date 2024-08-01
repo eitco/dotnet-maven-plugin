@@ -44,6 +44,8 @@ When maven is started this will activate a build lifecycle that calls the dotnet
 This assumes that a valid sln or csproj file is in the same path as the pom and that dotnet is available in the PATH 
 environment variable.
 
+A complete reference of the available goals and parameters can be found [here](https://eitco.github.io/dotnet-maven-plugin/plugin-info.html).
+
 # build lifecycle
 
 The following goals are bound to the build lifecycle:
