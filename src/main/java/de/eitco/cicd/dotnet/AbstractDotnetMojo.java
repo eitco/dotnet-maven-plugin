@@ -12,10 +12,12 @@ import org.sonatype.plexus.components.sec.dispatcher.SecDispatcherException;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public abstract class AbstractDotnetMojo extends AbstractMojo {
 
+    public static final String SUFFIX_SNAPSHOT = "-SNAPSHOT";
     /**
      * This parameter specifies the directory where to execute {@code dotnet} and thus where the
      * project files are located
@@ -62,10 +64,10 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
      * name {@code nuget} will use to identify the repository by. It can also be used to add
      * <a href="https://maven.apache.org/settings.html#servers">credentials</a> to using {@code <server>}
      * elements in the {@code settings.xml}.
-     *
+     * <p>
      * Consider to <a href="https://maven.apache.org/guides/mini/guide-encryption.html">encrypt passwords</a> in
      * your {@code settings.xml}
-     *
+     * <p>
      * Note that crendentials added this way will be written to your nuget configuration file. On windows systems
      * the credentials will be encrypted, however on linux systems password encryption is not supported by
      * {@code nuget} - so the credentials will be written to the {code nuget} config way unencrypted.
@@ -108,6 +110,54 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
     @Parameter(defaultValue = "${settings.localRepository}")
     protected String localMavenNugetRepositoryBaseDirectory;
 
+    /**
+     * This parameter specifies properties that contain versions. They will be handled differently than normal
+     * properties to honour '-SNAPSHOT' dependencies. This happens in two steps per property:
+     * <ol>
+     *      <li>it is checked whether the property value ends with '-SNAPSHOT'
+     *          <ul>
+     *              <li>if not the value of the property is used</li>
+     *              <li>if it does end with '-SNAPSHOT' the ending substring '-SNAPSHOT' is replaced with the value of
+     *                      the parameter {@link #snapshotReplacement}</li>
+     *          </ul>
+     *      </li>
+     *      <li>it is checked if the resulting string contains the string '%c'
+     *          <ul>
+     *              <li>if not this is the value used</li>
+     *              <li>if yes, the string will represent a version range: the minimum element is the string with every
+     *                      occurrence of '%c' replaced by '0', the (excluded) upper bound will be the string with every
+     *                      occurrence of '%c' replaced by 'A'</li>
+     *          </ul>
+     *      </li>
+     * </ol>
+     * <p>
+     * For example this configuration:
+     * <pre>
+     * {@code
+     * <versionProperties>
+     *   <apacheVersion>3.1.4</apacheVersion>
+     *   <someMavenDependencyVersion>1.5.6-dev-version-addendum-SNAPSHOT</someMavenDependencyVersion>
+     * </versionProperties>
+     * }
+     * </pre>
+     * <p>
+     * would result in two dotnet properties, referable with '$()' so that
+     * <pre>
+     * {@code
+     * $(apacheVersion) = 3.1.4
+     * $(someMavenDependencyVersion) = [1.5.6-dev-version-addendum-build.0,1.5.6-dev-version-addendum-build.A)
+     * }
+     * </pre>
+     */
+    @Parameter
+    protected Map<String, String> versionProperties = Map.of();
+
+    /**
+     * This parameter specifies the replacement of the suffix '-SNAPSHOT' in {@link #versionProperties version properties}
+     */
+    @Parameter(defaultValue = "-build.%c")
+    protected String snapshotReplacement;
+
     @Parameter(defaultValue = "${settings}", readonly = true)
     protected Settings settings;
 
@@ -125,11 +175,35 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
                 dotnetExecutable,
                 targetDirectory,
                 projectVersion,
-                customProperties,
+                buildProperties(),
                 environmentVariables,
                 getLog(),
                 ignoreResult
         );
+    }
+
+    private Map<String, String> buildProperties() {
+
+        LinkedHashMap<String, String> result = new LinkedHashMap<>(customProperties);
+
+        versionProperties.forEach((key, value) -> {
+
+            if (!value.endsWith(SUFFIX_SNAPSHOT)) {
+                result.put(key, value);
+                return;
+            }
+
+            String template = value.substring(0, value.length() - SUFFIX_SNAPSHOT.length()) + snapshotReplacement;
+
+            String lowerValue = template.replace("%c", "0");
+            String upperValue = template.replace("%c", "A");
+
+            String range = "[" + lowerValue + "%2c" + upperValue + ")";
+
+            result.put(key, range);
+        });
+
+        return result;
     }
 
 
