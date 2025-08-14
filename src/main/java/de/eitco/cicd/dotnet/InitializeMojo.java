@@ -18,6 +18,11 @@ public class InitializeMojo extends AbstractDotnetMojo {
     @Override
     public void execute() throws MojoExecutionException {
 
+        if (skip) {
+            getLog().info("Skipping execution");
+            return;
+        }
+
         DotnetExecutor dotnetExecutor = newExecutor();
 
         createLocalNugetRepositoryDirectory();

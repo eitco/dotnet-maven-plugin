@@ -29,6 +29,11 @@ public class PackMojo extends AbstractDotnetMojo {
     @Override
     public void execute() throws MojoExecutionException {
 
+        if (skip) {
+            getLog().info("Skipping execution");
+            return;
+        }
+
         newExecutor().pack(vendor, description, repositoryUrl);
     }
 }

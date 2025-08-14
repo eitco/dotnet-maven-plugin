@@ -25,6 +25,11 @@ public class BuildMojo extends AbstractDotnetMojo {
     @Override
     public void execute() throws MojoExecutionException {
 
+        if (skip) {
+            getLog().info("Skipping execution");
+            return;
+        }
+
         newExecutor().build(assemblyVersion, vendor, configurationName);
     }
 }

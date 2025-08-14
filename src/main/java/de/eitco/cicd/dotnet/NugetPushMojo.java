@@ -54,6 +54,11 @@ public class NugetPushMojo extends AbstractDotnetMojo {
     @Override
     public void execute() throws MojoExecutionException {
 
+        if (skip) {
+            getLog().info("Skipping execution");
+            return;
+        }
+
         Server server = findServer(nugetServerId);
 
         String apiKey = server != null ? decrypt(server.getPassword()) : null;

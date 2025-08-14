@@ -161,6 +161,9 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
     @Parameter(defaultValue = "${settings}", readonly = true)
     protected Settings settings;
 
+    @Parameter(defaultValue = "false")
+    protected boolean skip;
+
     @Component(hint = "dotnet-security")
     private SecDispatcher securityDispatcher;
 

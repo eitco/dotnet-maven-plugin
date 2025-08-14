@@ -25,6 +25,11 @@ public class InstallMojo extends AbstractDotnetMojo {
     @Override
     public void execute() throws MojoExecutionException {
 
+        if (skip) {
+            getLog().info("Skipping execution");
+            return;
+        }
+
         File[] files = targetDirectory.listFiles(file -> file.getName().endsWith(NUPKG_SUFFIX));
 
         if (files == null) {
