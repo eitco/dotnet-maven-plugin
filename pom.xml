@@ -14,6 +14,8 @@
     <version>0.0.7-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
+    <name>${project.artifactId}</name>
+
     <description>
         a maven plugin providing a build lifecycle for dotnet
     </description>
