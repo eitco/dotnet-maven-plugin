@@ -191,6 +191,11 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
 
         versionProperties.forEach((key, value) -> {
 
+            if (value == null || value.trim().isEmpty()) {
+
+                return;
+            }
+
             if (!value.endsWith(SUFFIX_SNAPSHOT)) {
                 result.put(key, value);
                 return;
