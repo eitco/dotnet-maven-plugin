@@ -35,7 +35,7 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
     /**
      * This parameter specifies the directory where {@code dotnet} writes its generated package(s) to.
      */
-    @Parameter(defaultValue = "${project.build.directory}/dotnet")
+    @Parameter(defaultValue = "${project.build.directory}/dot-net")
     protected File targetDirectory;
 
     /**
