@@ -24,6 +24,7 @@ public record DotnetExecutor(
         String version,
         Map<String, String> customProperties,
         Map<String, String> environment,
+        Map<String, String> inlineRunSettings,
         Log log,
         boolean ignoreResult
 ) {
@@ -33,7 +34,7 @@ public record DotnetExecutor(
 
     public int execute(String... parameters) throws MojoExecutionException {
 
-        return execute(defaultOptions().mergeIgnoreResult(ignoreResult), List.of(parameters), Set.of(), Map.of());
+        return execute(defaultOptions().mergeIgnoreResult(ignoreResult), List.of(parameters), Set.of(), Map.of(), Map.of());
     }
 
     private static class ExecutionOptions {
@@ -69,13 +70,19 @@ public record DotnetExecutor(
         return new ExecutionOptions();
     }
 
-    private int execute(ExecutionOptions executionOptions, List<String> parameters, Set<String> obfuscation, Map<String, String> propertyOverrides) throws MojoExecutionException {
+    private int execute(
+            ExecutionOptions executionOptions,
+            List<String> parameters,
+            Set<String> obfuscation,
+            Map<String, String> propertyOverrides,
+            Map<String, String> inlineRunSettings
+    ) throws MojoExecutionException {
 
         ProcessBuilder builder = new ProcessBuilder();
 
         builder.directory(workingDirectory);
 
-        List<String> command = buildCommand(parameters, propertyOverrides);
+        List<String> command = buildCommand(parameters, propertyOverrides, inlineRunSettings);
 
         builder.command(command);
 
@@ -117,7 +124,11 @@ public record DotnetExecutor(
         return command.stream().map(x -> obfuscation.contains(x) ? "****" : x).collect(Collectors.joining(" "));
     }
 
-    private List<String> buildCommand(List<String> parameters, Map<String, String> propertyOverrides) {
+    private List<String> buildCommand(
+            List<String> parameters,
+            Map<String, String> propertyOverrides,
+            Map<String, String> inlineRunSettings
+    ) {
 
         List<String> command = new ArrayList<>();
 
@@ -134,6 +145,12 @@ public record DotnetExecutor(
             properties.forEach((key, value) -> command.add("\"-p:" + key + "=" + value + "\""));
         }
 
+        if (inlineRunSettings != null && !inlineRunSettings.isEmpty()) {
+
+            command.add("--");
+            command.addAll(inlineRunSettings.entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue()).toList());
+        }
+
         return command;
     }
 
@@ -141,11 +158,18 @@ public record DotnetExecutor(
         command.add(executable == null ? (SystemUtils.IS_OS_WINDOWS ? "dotnet.exe" : "dotnet") : executable.getPath());
     }
 
-    private void retry(int times, ExecutionOptions executionOptions, List<String> parameters, Set<String> obfuscation, Map<String, String> propertyOverrides) throws MojoExecutionException {
+    private void retry(
+            int times,
+            ExecutionOptions executionOptions,
+            List<String> parameters,
+            Set<String> obfuscation,
+            Map<String, String> propertyOverrides,
+            Map<String, String> inlineRunSettings
+    ) throws MojoExecutionException {
 
         for (int index = 0; index < times; index++) {
 
-            int returnCode = execute(executionOptions.ignoreResult(), parameters, obfuscation, propertyOverrides);
+            int returnCode = execute(executionOptions.ignoreResult(), parameters, obfuscation, propertyOverrides, inlineRunSettings);
 
             if (returnCode == 0) {
 
@@ -153,10 +177,14 @@ public record DotnetExecutor(
             }
         }
 
-        execute(executionOptions, parameters, obfuscation, propertyOverrides);
+        execute(executionOptions, parameters, obfuscation, propertyOverrides, inlineRunSettings);
     }
 
-    public void build(String assemblyVersion, String vendor, String configuration) throws MojoExecutionException {
+    public void build(
+            String assemblyVersion,
+            String vendor,
+            String configuration
+    ) throws MojoExecutionException {
 
         List<String> parameters = new ArrayList<>(List.of("build", "-p:Version=" + version));
 
@@ -174,10 +202,14 @@ public record DotnetExecutor(
             parameters.add("--configuration=" + configuration);
         }
 
-        retry(1, defaultOptions(), parameters, Set.of(), propertyOverrides);
+        retry(1, defaultOptions(), parameters, Set.of(), propertyOverrides, inlineRunSettings);
     }
 
-    public void pack(String vendor, String description, String repositoryUrl) throws MojoExecutionException {
+    public void pack(
+            String vendor,
+            String description,
+            String repositoryUrl
+    ) throws MojoExecutionException {
 
         List<String> parameters = new ArrayList<>(List.of(
                 "pack",
@@ -203,7 +235,7 @@ public record DotnetExecutor(
         parameters.add("--output");
         parameters.add(targetDirectory.getPath());
 
-        execute(defaultOptions(), parameters, Set.of(), propertyOverrides);
+        execute(defaultOptions(), parameters, Set.of(), propertyOverrides, inlineRunSettings);
     }
 
     public int test(String logger, String testResultDirectory) throws MojoExecutionException {
@@ -225,7 +257,7 @@ public record DotnetExecutor(
             parameters.add(repository);
         }
 
-        execute(defaultOptions().mergeIgnoreResult(ignoreResult), parameters, Optional.ofNullable(apiKey).stream().collect(Collectors.toSet()), null);
+        execute(defaultOptions().mergeIgnoreResult(ignoreResult), parameters, Optional.ofNullable(apiKey).stream().collect(Collectors.toSet()), null, null);
     }
 
     public enum NugetConfigLocation {
@@ -249,12 +281,12 @@ public record DotnetExecutor(
 
         List<String> updateParameters = getUpsertParameters(username, apiToken, configLocation, "nuget", "update", "source", sourceName, "--source", url);
 
-        int result = execute(defaultOptions().ignoreResult(), updateParameters, obfuscation, null);
+        int result = execute(defaultOptions().ignoreResult(), updateParameters, obfuscation, null, null);
 
         if (result != 0) {
 
             List<String> addParameters = getUpsertParameters(username, apiToken, configLocation, "nuget", "add", "source", url, "--name", sourceName);
-            execute(defaultOptions(), addParameters, obfuscation, null);
+            execute(defaultOptions(), addParameters, obfuscation, null, null);
         }
     }
 
@@ -368,7 +400,7 @@ public record DotnetExecutor(
 
     public void clean() throws MojoExecutionException {
 
-        retry(1, defaultOptions().ignoreResult(), List.of("clean"), Set.of(), Map.of("Version", version));
+        retry(1, defaultOptions().ignoreResult(), List.of("clean"), Set.of(), Map.of("Version", version), null);
     }
 
     public String getLocalArtifactCache() throws MojoExecutionException {

@@ -164,6 +164,12 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
     @Parameter(defaultValue = "false")
     protected boolean skip;
 
+    /**
+     * This parameter lets you specify run settings that will be added to the dotnet command line.
+     */
+    @Parameter
+    protected Map<String, String> inlineRunSettings = Map.of();
+
     @Component(hint = "dotnet-security")
     private SecDispatcher securityDispatcher;
 
@@ -180,6 +186,7 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
                 projectVersion,
                 buildProperties(),
                 environmentVariables,
+                inlineRunSettings,
                 getLog(),
                 ignoreResult
         );
