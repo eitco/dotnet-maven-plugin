@@ -137,7 +137,7 @@ public record DotnetExecutor(
             Map<String, String> properties = new HashMap<>(customProperties);
             properties.putAll(propertyOverrides);
 
-            properties.forEach((key, value) -> command.add("\"-p:" + key + "=" + value + "\""));
+            properties.forEach((key, value) -> command.add("-p:" + key + "=" + value));
         }
 
         if (inlineRunSettings != null && !inlineRunSettings.isEmpty()) {
