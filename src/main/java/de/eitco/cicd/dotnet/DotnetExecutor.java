@@ -32,11 +32,6 @@ public record DotnetExecutor(
     public static final String DEFAULT_NUGET_CONFIG = "default.nuget.config";
     public static final Pattern LOCALS_PATTERN = Pattern.compile("\\s*global-packages:\\s*(?<directory>.*)\\s*");
 
-    public int execute(String... parameters) throws MojoExecutionException {
-
-        return execute(defaultOptions().mergeIgnoreResult(ignoreResult), List.of(parameters), Set.of(), Map.of(), Map.of());
-    }
-
     private static class ExecutionOptions {
         private boolean ignoreResult = false;
         private boolean inheritIo = true;
@@ -202,7 +197,7 @@ public record DotnetExecutor(
             parameters.add("--configuration=" + configuration);
         }
 
-        retry(1, defaultOptions(), parameters, Set.of(), propertyOverrides, inlineRunSettings);
+        retry(1, defaultOptions(), parameters, Set.of(), propertyOverrides, null);
     }
 
     public void pack(
@@ -235,12 +230,18 @@ public record DotnetExecutor(
         parameters.add("--output");
         parameters.add(targetDirectory.getPath());
 
-        execute(defaultOptions(), parameters, Set.of(), propertyOverrides, inlineRunSettings);
+        execute(defaultOptions(), parameters, Set.of(), propertyOverrides, null);
     }
 
     public int test(String logger, String testResultDirectory) throws MojoExecutionException {
 
-        return execute("test", "--no-build", "--logger", logger, "--results-directory", testResultDirectory);
+        return execute(
+                defaultOptions().mergeIgnoreResult(ignoreResult),
+                List.of("test", "--no-build", "--logger", logger, "--results-directory", testResultDirectory),
+                Set.of(),
+                Map.of(),
+                inlineRunSettings
+        );
     }
 
     public void push(String apiKey, String repository) throws MojoExecutionException {

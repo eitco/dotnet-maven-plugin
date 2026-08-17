@@ -165,7 +165,8 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
     protected boolean skip;
 
     /**
-     * This parameter lets you specify run settings that will be added to the dotnet command line.
+     * This parameter lets you specify run settings that will be added to the dotnet command line. They will only be
+     * added to 'dotnet test'.
      */
     @Parameter
     protected Map<String, String> inlineRunSettings = Map.of();
