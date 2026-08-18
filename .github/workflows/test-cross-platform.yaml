@@ -1,0 +1,24 @@
+name: cross-platform tests
+
+on:
+  push: { }
+  pull_request: { }
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ windows-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: set up jdk
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: execute maven install
+        shell: bash
+        run: mvn --batch-mode install -e
