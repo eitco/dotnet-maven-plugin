@@ -70,7 +70,7 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
      * This parameter specifies the base directory in which the {@link #dotnetSdkCacheName versioned .NET SDK cache}
      * is located.
      */
-    @Parameter(defaultValue = "${settings.localRepository}")
+    @Parameter(defaultValue = "${user.home}")
     protected String dotnetSdkCacheBaseDirectory;
 
     /**

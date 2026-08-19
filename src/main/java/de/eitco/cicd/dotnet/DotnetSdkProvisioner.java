@@ -52,7 +52,7 @@ public class DotnetSdkProvisioner {
         File sdkDir = new File(new File(new File(cacheRoot, rid), "sdk"), version);
         File markerFile = new File(new File(cacheRoot, rid + "/markers"), version + ".provisioned");
         File lockFile = new File(new File(cacheRoot, rid + "/locks"), version + ".lock");
-        File executable = new File(sdkDir, SystemUtils.IS_OS_WINDOWS ? "dotnet.exe" : "dotnet");
+        File executable = new File(sdkDir, rid.startsWith("win") ? "dotnet.exe" : "dotnet");
 
         if (isProvisioned(markerFile, executable)) {
             return executable;

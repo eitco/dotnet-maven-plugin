@@ -126,7 +126,8 @@ class DotnetSdkProvisionerTest {
                             Thread.currentThread().interrupt();
                         }
                         try {
-                            new File(dir, "dotnet").createNewFile();
+                            String executableName = r.startsWith("win") ? "dotnet.exe" : "dotnet";
+                            new File(dir, executableName).createNewFile();
                         } catch (IOException e) {
                             throw new MojoExecutionException(e);
                         }
