@@ -184,6 +184,13 @@ public class DotnetSdkProvisioner {
         return os + "-" + arch;
     }
 
+    static boolean isExactVersion(String version) {
+        if (version == null || version.isBlank()) {
+            return false;
+        }
+        return version.matches("^\\d+\\.\\d+\\.\\d+.*");
+    }
+
     static class ScriptBasedInstaller implements Installer {
 
         private static final String SCRIPT_BASE_URL = "https://dot.net/v1/";
@@ -201,12 +208,22 @@ public class DotnetSdkProvisioner {
             String scriptName = windows ? "dotnet-install.ps1" : "dotnet-install.sh";
             File script = downloadScript(scriptName);
             try {
-                java.util.List<String> command = windows
-                        ? java.util.List.of("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
-                        script.getAbsolutePath(), "-Version", version, "-InstallDir",
-                        installDir.getAbsolutePath(), "-NoPath")
-                        : java.util.List.of("bash", script.getAbsolutePath(), "--version", version, "--install-dir",
-                        installDir.getAbsolutePath(), "--no-path");
+                java.util.List<String> command;
+                if (isExactVersion(version)) {
+                    command = windows
+                            ? java.util.List.of("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
+                            script.getAbsolutePath(), "-Version", version, "-InstallDir",
+                            installDir.getAbsolutePath(), "-NoPath")
+                            : java.util.List.of("bash", script.getAbsolutePath(), "--version", version, "--install-dir",
+                            installDir.getAbsolutePath(), "--no-path");
+                } else {
+                    command = windows
+                            ? java.util.List.of("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
+                            script.getAbsolutePath(), "-Channel", version, "-InstallDir",
+                            installDir.getAbsolutePath(), "-NoPath")
+                            : java.util.List.of("bash", script.getAbsolutePath(), "--channel", version, "--install-dir",
+                            installDir.getAbsolutePath(), "--no-path");
+                }
                 runAndCheck(command, timeoutSeconds);
             } finally {
                 FileUtils.deleteQuietly(script);

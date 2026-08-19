@@ -189,4 +189,22 @@ class DotnetSdkProvisionerTest {
         // which are well-tested third-party components.
         assertNotNull(testProvisioner);
     }
+
+    @Test
+    void isExactVersionDetectsExactVersions() {
+        assertTrue(DotnetSdkProvisioner.isExactVersion("8.0.404"));
+        assertTrue(DotnetSdkProvisioner.isExactVersion("9.0.100"));
+        assertTrue(DotnetSdkProvisioner.isExactVersion("9.0.100-preview.1"));
+        assertTrue(DotnetSdkProvisioner.isExactVersion("10.0.0"));
+    }
+
+    @Test
+    void isExactVersionDetectsChannelStyleValues() {
+        assertFalse(DotnetSdkProvisioner.isExactVersion("8.0"));
+        assertFalse(DotnetSdkProvisioner.isExactVersion("9.0"));
+        assertFalse(DotnetSdkProvisioner.isExactVersion("LTS"));
+        assertFalse(DotnetSdkProvisioner.isExactVersion("STS"));
+        assertFalse(DotnetSdkProvisioner.isExactVersion("latest"));
+        assertFalse(DotnetSdkProvisioner.isExactVersion("current"));
+    }
 }

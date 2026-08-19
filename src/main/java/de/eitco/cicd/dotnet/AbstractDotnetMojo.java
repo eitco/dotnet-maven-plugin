@@ -7,6 +7,7 @@ import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
+import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.sonatype.plexus.components.sec.dispatcher.SecDispatcher;
 import org.sonatype.plexus.components.sec.dispatcher.SecDispatcherException;
 
@@ -33,16 +34,20 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
     protected File dotnetExecutable;
 
     /**
-     * This parameter specifies the version of the .NET SDK that this plugin should download and use, instead of
-     * relying on a {@code dotnet} installation already present on the system. If set, the plugin downloads the
-     * requested SDK version into a per-user, per-version local cache directory (see {@link #dotnetSdkCacheName}
+     * This parameter specifies the version or channel of the .NET SDK that this plugin should download and use,
+     * instead of relying on a {@code dotnet} installation already present on the system. If set, the plugin downloads
+     * the requested SDK into a per-user, per-version local cache directory (see {@link #dotnetSdkCacheName}
      * and {@link #dotnetSdkCacheBaseDirectory}) using Microsoft's official {@code dotnet-install} script, without
      * making any system-wide changes (no PATH modification, no registry entries). Subsequent builds requesting the
      * same version reuse the cached installation without re-downloading it.
      * <p>
-     * Any valid value accepted by the {@code --version}/{@code -Version} option of the official
-     * <a href="https://learn.microsoft.com/dotnet/core/tools/dotnet-install-script">dotnet-install script</a> can be
-     * used, e.g. {@code 8.0.404}.
+     * <strong>Exact versions</strong> (e.g. {@code 8.0.424}, {@code 9.0.100}, {@code 9.0.100-preview.1}): Downloads
+     * the exact SDK version specified. Use this for determinism.
+     * <p>
+     * <strong>Channel-style values</strong> (e.g. {@code 8.0}, {@code 9.0}, {@code LTS}, {@code STS}, {@code latest},
+     * {@code current}): Downloads the latest patch of that channel. The version is pinned on first successful download
+     * into the cache directory (e.g. {@code .../sdk/8.0/}); later upstream patches are not automatically picked up.
+     * To use latest patches, clear the cache or use an exact version.
      * <p>
      * This parameter is mutually exclusive with {@link #dotnetExecutable}; configuring both fails the build
      * immediately with a clear error message. If neither is set, {@code dotnet} being available via the {@code PATH}
@@ -246,25 +251,7 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
     }
 
     protected File getResolvedDotnetSdkCacheDirectory() {
-        String baseDirectory = dotnetSdkCacheBaseDirectory;
-
-        for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
-
-            String key = entry.getKey();
-            String value = entry.getValue();
-
-            baseDirectory = baseDirectory.replace("%" + key + "%", value);
-        }
-
-        for (Map.Entry<String, String> entry : environmentVariables.entrySet()) {
-
-            String key = entry.getKey();
-            String value = entry.getValue();
-
-            baseDirectory = baseDirectory.replace("%" + key + "%", value);
-        }
-
-        return new File(baseDirectory, "." + dotnetSdkCacheName);
+        return resolveConfiguredDirectory(dotnetSdkCacheBaseDirectory, dotnetSdkCacheName);
     }
 
     private Map<String, String> buildProperties() {
@@ -321,6 +308,11 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
 
     protected File getResolvedNugetRepoDirectory() {
 
+        return resolveConfiguredDirectory(localMavenNugetRepositoryBaseDirectory, localMavenNugetRepositoryName);
+    }
+
+    @NonNullDecl
+    private File resolveConfiguredDirectory(String localMavenNugetRepositoryBaseDirectory, String localMavenNugetRepositoryName) {
         String baseDirectory = localMavenNugetRepositoryBaseDirectory;
 
         for (Map.Entry<String, String> entry : System.getenv().entrySet()) {

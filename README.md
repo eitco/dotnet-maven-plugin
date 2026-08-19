@@ -82,7 +82,11 @@ Set the `<dotnetSdkVersion>` parameter and the plugin will download and cache th
 
 The SDK is downloaded using Microsoft's official [`dotnet-install` script](https://learn.microsoft.com/dotnet/core/tools/dotnet-install-script) and stored in a versioned cache directory (default: `~/.m2/repository/.maven-dotnet-sdk-local/<rid>/<version>`) without any system-wide installation. The same version is reused across repeated builds and is safe for concurrent builds.
 
-**Supported versions**: Any version accepted by the `dotnet-install` script, e.g. `8.0.404`, `8.0`, `lts`, `latest`.
+**Supported versions**:
+- **Exact versions** (e.g. `8.0.424`, `9.0.100`, `9.0.100-preview.1`): Uses `--version`, downloads the exact SDK.
+- **Channel-style values** (e.g. `8.0`, `9.0`, `LTS`, `STS`, `latest`, `current`): Uses `--channel`, pins to the latest patch of that channel at first successful download. Later patches for that channel are not auto-picked unless the cache is cleared or an exact version is used.
+
+**Caching caveat**: A channel-style value like `dotnetSdkVersion=8.0` pins whatever exact SDK version that channel resolved to **on first successful provisioning** into the cache directory (`.../sdk/8.0/`). Subsequent builds reuse that pinned patch, so you don't pick up new upstream patches automatically — this is intentional for determinism. If you want latest patches to be picked up, clear the cache directory or use exact versions instead.
 
 **Note**: `<dotnetExecutable>` and `<dotnetSdkVersion>` are mutually exclusive. Configuring both will fail the build immediately.
 
