@@ -41,8 +41,66 @@ To activate this build lifecycle add this plugin to your pom and set `packaging`
 > 📘 you need to activate extensions for this plugin (1) 
 
 When maven is started this will activate a build lifecycle that calls the dotnet executable to build the current project. 
-This assumes that a valid sln or csproj file is in the same path as the pom and that dotnet is available in the PATH 
-environment variable.
+A valid sln or csproj file must be in the same path as the pom.
+
+## Choosing how `dotnet` is resolved
+
+By default, the plugin assumes `dotnet` is available in the `PATH` environment variable. Three modes are supported:
+
+### Default: PATH lookup
+No configuration needed. The plugin calls `dotnet`/`dotnet.exe` directly, and the OS resolves it via `PATH`.
+
+### Mode 1: Explicit executable path
+Set the `<dotnetExecutable>` parameter to point at a pre-installed `dotnet` executable:
+
+````xml
+<plugin>
+    <groupId>de.eitco.cicd</groupId>
+    <artifactId>dotnet-maven-plugin</artifactId>
+    <version>1.0.0</version>
+    <extensions>true</extensions>
+    <configuration>
+        <dotnetExecutable>/usr/local/dotnet-custom/dotnet</dotnetExecutable>
+    </configuration>
+</plugin>
+````
+
+### Mode 2: Managed download
+Set the `<dotnetSdkVersion>` parameter and the plugin will download and cache the specified .NET SDK version locally:
+
+````xml
+<plugin>
+    <groupId>de.eitco.cicd</groupId>
+    <artifactId>dotnet-maven-plugin</artifactId>
+    <version>1.0.0</version>
+    <extensions>true</extensions>
+    <configuration>
+        <dotnetSdkVersion>8.0.404</dotnetSdkVersion>
+    </configuration>
+</plugin>
+````
+
+The SDK is downloaded using Microsoft's official [`dotnet-install` script](https://learn.microsoft.com/dotnet/core/tools/dotnet-install-script) and stored in a versioned cache directory (default: `~/.m2/repository/.maven-dotnet-sdk-local/<rid>/<version>`) without any system-wide installation. The same version is reused across repeated builds and is safe for concurrent builds.
+
+**Supported versions**: Any version accepted by the `dotnet-install` script, e.g. `8.0.404`, `8.0`, `lts`, `latest`.
+
+**Note**: `<dotnetExecutable>` and `<dotnetSdkVersion>` are mutually exclusive. Configuring both will fail the build immediately.
+
+#### Cache directory customization
+
+Override the cache location (defaults to `${settings.localRepository}/.maven-dotnet-sdk-local`):
+
+````xml
+<configuration>
+    <dotnetSdkVersion>8.0.404</dotnetSdkVersion>
+    <dotnetSdkCacheBaseDirectory>~/.dotnet-sdks</dotnetSdkCacheBaseDirectory>
+    <dotnetSdkCacheName>myproject-sdks</dotnetSdkCacheName>
+</configuration>
+````
+
+#### Network filesystem limitation
+
+Do not point `<dotnetSdkCacheBaseDirectory>` at a network filesystem (NFS/SMB). The plugin uses advisory file locking for concurrent-build safety, which is unreliable over network filesystems. Use a local directory instead.
 
 A complete reference of the available goals and parameters can be found [here](https://eitco.github.io/dotnet-maven-plugin/plugin-info.html).
 

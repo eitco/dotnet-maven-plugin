@@ -36,10 +36,17 @@
 
     <properties>
         <maven-clean-plugin.version>3.3.2</maven-clean-plugin.version>
+        <skip.dotnet.sdk.download.it>false</skip.dotnet.sdk.download.it>
     </properties>
 
 
     <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.2</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-plugin-api</artifactId>
@@ -101,6 +108,31 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>skip-dotnet-sdk-download-it</id>
+            <activation>
+                <property>
+                    <name>skip.dotnet.sdk.download.it</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-invoker-plugin</artifactId>
+                        <configuration>
+                            <pomExcludes>
+                                <pomExclude>sdk-download/pom.xml</pomExclude>
+                            </pomExcludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <reporting>
         <excludeDefaults>true</excludeDefaults>

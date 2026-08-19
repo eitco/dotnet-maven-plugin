@@ -33,6 +33,50 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
     protected File dotnetExecutable;
 
     /**
+     * This parameter specifies the version of the .NET SDK that this plugin should download and use, instead of
+     * relying on a {@code dotnet} installation already present on the system. If set, the plugin downloads the
+     * requested SDK version into a per-user, per-version local cache directory (see {@link #dotnetSdkCacheName}
+     * and {@link #dotnetSdkCacheBaseDirectory}) using Microsoft's official {@code dotnet-install} script, without
+     * making any system-wide changes (no PATH modification, no registry entries). Subsequent builds requesting the
+     * same version reuse the cached installation without re-downloading it.
+     * <p>
+     * Any valid value accepted by the {@code --version}/{@code -Version} option of the official
+     * <a href="https://learn.microsoft.com/dotnet/core/tools/dotnet-install-script">dotnet-install script</a> can be
+     * used, e.g. {@code 8.0.404}.
+     * <p>
+     * This parameter is mutually exclusive with {@link #dotnetExecutable}; configuring both fails the build
+     * immediately with a clear error message. If neither is set, {@code dotnet} being available via the {@code PATH}
+     * environment variable is assumed (this is the default, unchanged behaviour).
+     */
+    @Parameter
+    protected String dotnetSdkVersion;
+
+    /**
+     * This parameter specifies the symbolic name of the local cache directory used to store .NET SDK versions
+     * downloaded because of {@link #dotnetSdkVersion}. Analogous to {@link #localMavenNugetRepositoryName}, the
+     * actual directory name is this value prefixed with {@code "."}.
+     * <br/>
+     * The location of the cache directory can be configured with {@link #dotnetSdkCacheBaseDirectory}.
+     */
+    @Parameter(defaultValue = "maven-dotnet-sdk-local")
+    protected String dotnetSdkCacheName;
+
+    /**
+     * This parameter specifies the base directory in which the {@link #dotnetSdkCacheName versioned .NET SDK cache}
+     * is located.
+     */
+    @Parameter(defaultValue = "${settings.localRepository}")
+    protected String dotnetSdkCacheBaseDirectory;
+
+    /**
+     * This parameter specifies the maximum time, in seconds, this plugin waits for a .NET SDK download/install
+     * (triggered by {@link #dotnetSdkVersion}) to complete, including time spent waiting for a concurrently running
+     * build (in this or another process) that is already installing the same SDK version.
+     */
+    @Parameter(defaultValue = "600")
+    protected int dotnetSdkProvisioningTimeoutSeconds;
+
+    /**
      * This parameter specifies the directory where {@code dotnet} writes its generated package(s) to.
      */
     @Parameter(defaultValue = "${project.build.directory}/dot-net")
@@ -174,15 +218,15 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
     @Component(hint = "dotnet-security")
     private SecDispatcher securityDispatcher;
 
-    protected DotnetExecutor newExecutor() {
+    protected DotnetExecutor newExecutor() throws MojoExecutionException {
 
         return newExecutor(false);
     }
 
-    protected DotnetExecutor newExecutor(boolean ignoreResult) {
+    protected DotnetExecutor newExecutor(boolean ignoreResult) throws MojoExecutionException {
         return new DotnetExecutor(
                 workingDirectory,
-                dotnetExecutable,
+                resolveDotnetExecutable(),
                 targetDirectory,
                 projectVersion,
                 buildProperties(),
@@ -191,6 +235,36 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
                 getLog(),
                 ignoreResult
         );
+    }
+
+    protected File resolveDotnetExecutable() throws MojoExecutionException {
+        return DotnetExecutableResolver.resolve(dotnetExecutable, dotnetSdkVersion, dotnetSdkProvisioner());
+    }
+
+    protected DotnetSdkProvisioner dotnetSdkProvisioner() {
+        return new DotnetSdkProvisioner(getResolvedDotnetSdkCacheDirectory(), dotnetSdkProvisioningTimeoutSeconds, getLog());
+    }
+
+    protected File getResolvedDotnetSdkCacheDirectory() {
+        String baseDirectory = dotnetSdkCacheBaseDirectory;
+
+        for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+
+            String key = entry.getKey();
+            String value = entry.getValue();
+
+            baseDirectory = baseDirectory.replace("%" + key + "%", value);
+        }
+
+        for (Map.Entry<String, String> entry : environmentVariables.entrySet()) {
+
+            String key = entry.getKey();
+            String value = entry.getValue();
+
+            baseDirectory = baseDirectory.replace("%" + key + "%", value);
+        }
+
+        return new File(baseDirectory, "." + dotnetSdkCacheName);
     }
 
     private Map<String, String> buildProperties() {
