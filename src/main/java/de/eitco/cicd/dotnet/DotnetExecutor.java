@@ -136,7 +136,8 @@ public record DotnetExecutor(
             Map<String, String> properties = new HashMap<>(customProperties);
             properties.putAll(propertyOverrides);
 
-            properties.forEach((key, value) -> command.add("-p:" + key + "=" + value));
+            // maven configures elements without text as null - these are passed as empty properties
+            properties.forEach((key, value) -> command.add("-p:" + key + "=" + (value == null ? "" : value)));
         }
 
         if (inlineRunSettings != null && !inlineRunSettings.isEmpty()) {

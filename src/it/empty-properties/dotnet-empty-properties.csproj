@@ -1,0 +1,30 @@
+<Project>
+    <PropertyGroup>
+        <OutputType>library</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <BaseOutputPath>target\bin</BaseOutputPath>
+        <BaseIntermediateOutputPath>target\obj</BaseIntermediateOutputPath>
+        <OutputPath>target\obj</OutputPath>
+        <MSBUildProjectExtensionsPath>target\obj</MSBUildProjectExtensionsPath>
+    </PropertyGroup>
+
+    <!-- these defaults are only visible if a property is not given on the command line -->
+    <PropertyGroup>
+        <EmptyPair>not-overridden</EmptyPair>
+        <SelfClosing>not-overridden</SelfClosing>
+        <Whitespace>not-overridden</Whitespace>
+        <Comment>not-overridden</Comment>
+        <Cdata>not-overridden</Cdata>
+        <EmptyExpression>not-overridden</EmptyExpression>
+        <Control>not-overridden</Control>
+    </PropertyGroup>
+
+    <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk"/>
+    <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk"/>
+
+    <Target Name="WriteCustomProperties" AfterTargets="Build">
+        <WriteLinesToFile File="$(MSBuildProjectDirectory)/target/properties.txt" Overwrite="true" Lines="EmptyPair=[$(EmptyPair)];SelfClosing=[$(SelfClosing)];Whitespace=[$(Whitespace)];Comment=[$(Comment)];Cdata=[$(Cdata)];EmptyExpression=[$(EmptyExpression)];Control=[$(Control)]"/>
+    </Target>
+</Project>

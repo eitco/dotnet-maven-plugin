@@ -126,6 +126,7 @@
                         <configuration>
                             <pomExcludes>
                                 <pomExclude>sdk-download/pom.xml</pomExclude>
+                                <pomExclude>empty-properties/pom.xml</pomExclude>
                             </pomExcludes>
                         </configuration>
                     </plugin>
