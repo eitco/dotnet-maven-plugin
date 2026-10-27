@@ -86,9 +86,7 @@ public record DotnetExecutor(
             builder.inheritIO();
         }
 
-        optOut(builder);
-
-        environment.forEach((key, value) -> builder.environment().put(key, value));
+        applyEnvironment(builder);
 
         try {
 
@@ -110,8 +108,9 @@ public record DotnetExecutor(
         }
     }
 
-    private static void optOut(ProcessBuilder builder) {
+    private void applyEnvironment(ProcessBuilder builder) {
         builder.environment().put("DOTNET_CLI_TELEMETRY_OPTOUT", "TRUE");
+        environment.forEach((key, value) -> builder.environment().put(key, value));
     }
 
     private static String presentCommand(List<String> command, Set<String> obfuscation) {
@@ -407,7 +406,7 @@ public record DotnetExecutor(
     public String getLocalArtifactCache() throws MojoExecutionException {
 
         ProcessBuilder builder = new ProcessBuilder();
-        optOut(builder);
+        applyEnvironment(builder);
 
         prepareCommand(builder.command());
         builder.command().addAll(List.of("nuget", "locals", "global-packages", "--list"));

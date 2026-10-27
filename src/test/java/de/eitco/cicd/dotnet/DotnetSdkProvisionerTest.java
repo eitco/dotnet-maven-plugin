@@ -35,9 +35,7 @@ class DotnetSdkProvisionerTest {
 
         // Pre-populate the cache with marker and executable
         File ridDir = new File(cacheRoot, rid);
-        File markersDir = new File(ridDir, "markers");
-        File sdkDir = new File(new File(ridDir, "sdk"), version);
-        markersDir.mkdirs();
+        File sdkDir = new File(ridDir, version);
         sdkDir.mkdirs();
 
         File executable = new File(sdkDir, "dotnet");
@@ -47,7 +45,7 @@ class DotnetSdkProvisionerTest {
             throw new MojoExecutionException(e);
         }
 
-        File markerFile = new File(markersDir, version + ".provisioned");
+        File markerFile = new File(ridDir, version + ".provisioned");
         try {
             markerFile.createNewFile();
         } catch (IOException e) {
@@ -77,7 +75,7 @@ class DotnetSdkProvisionerTest {
 
         // Pre-populate stale cache (junk files, no marker)
         File ridDir = new File(cacheRoot, rid);
-        File sdkDir = new File(new File(ridDir, "sdk"), version);
+        File sdkDir = new File(ridDir, version);
         sdkDir.mkdirs();
         try {
             new File(sdkDir, "garbage.txt").createNewFile();
@@ -107,6 +105,37 @@ class DotnetSdkProvisionerTest {
         assertTrue(result.exists(), "Executable should exist after provisioning");
         assertEquals(1, installCount.get(), "Installer should have been called to reprovision");
         assertFalse(new File(sdkDir, "garbage.txt").exists(), "Stale files should be cleaned");
+    }
+
+    @Test
+    void installsIntoRidAndVersionDirectory(@TempDir File cacheRoot) throws MojoExecutionException {
+        String version = "8.0.424";
+        String rid = "linux-x64";
+        File[] installDir = new File[1];
+
+        DotnetSdkProvisioner testProvisioner = new DotnetSdkProvisioner(
+                cacheRoot, 600, null,
+                (v, dir, r, timeout) -> {
+                    installDir[0] = dir;
+                    try {
+                        new File(dir, "dotnet").createNewFile();
+                    } catch (IOException e) {
+                        throw new MojoExecutionException(e);
+                    }
+                }) {
+            @Override
+            protected String computeRid() {
+                return rid;
+            }
+        };
+
+        File result = testProvisioner.resolveExecutable(version);
+
+        File expectedSdkDir = new File(new File(cacheRoot, rid), version);
+        assertEquals(expectedSdkDir.getAbsolutePath(), installDir[0].getAbsolutePath());
+        assertEquals(new File(expectedSdkDir, "dotnet").getAbsolutePath(), result.getAbsolutePath());
+        assertTrue(new File(new File(cacheRoot, rid), version + ".provisioned").isFile(),
+                "Marker should be a sibling of the SDK directory");
     }
 
     @Test

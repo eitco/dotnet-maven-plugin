@@ -20,6 +20,7 @@
                     <assemblyVersion>0.0.1</assemblyVersion>
                     <configurationName>Release</configurationName>
                     <dotnetSdkVersion>8.0.424</dotnetSdkVersion>
+                    <dotnetSdkCacheBaseDirectory>@project.build.directory@</dotnetSdkCacheBaseDirectory>
                 </configuration>
             </plugin>
         </plugins>

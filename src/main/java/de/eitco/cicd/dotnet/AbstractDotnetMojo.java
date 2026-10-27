@@ -36,24 +36,33 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
     /**
      * This parameter specifies the version or channel of the .NET SDK that this plugin should download and use,
      * instead of relying on a {@code dotnet} installation already present on the system. If set, the plugin downloads
-     * the requested SDK into a per-user, per-version local cache directory (see {@link #dotnetSdkCacheName}
+     * the requested SDK into a per-version local cache directory (see {@link #dotnetSdkCacheName}
      * and {@link #dotnetSdkCacheBaseDirectory}) using Microsoft's official {@code dotnet-install} script, without
      * making any system-wide changes (no PATH modification, no registry entries). Subsequent builds requesting the
-     * same version reuse the cached installation without re-downloading it.
+     * same version reuse the cached installation without re-downloading it. The SDK is located at
+     * {@code <dotnetSdkCacheBaseDirectory>/.<dotnetSdkCacheName>/<rid>/<version>}, which defaults to
+     * {@code ~/.m2/repository/.dotnet-sdk/<rid>/<version>}. Concurrent builds - in this or other processes - that
+     * request the same version wait for each other, so the SDK is downloaded only once.
+     * <p>
+     * {@code dotnet} processes run with a managed SDK get environment variables that keep them from writing to the
+     * user's {@code ~/.dotnet} directory ({@code DOTNET_NOLOGO}, {@code DOTNET_SKIP_FIRST_TIME_EXPERIENCE},
+     * {@code DOTNET_GENERATE_ASPNET_CERTIFICATE=false}, {@code DOTNET_ADD_GLOBAL_TOOLS_TO_PATH=false},
+     * {@code DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE}). Each of them can be overridden with
+     * {@link #environmentVariables}.
      * <p>
      * <strong>Exact versions</strong> (e.g. {@code 8.0.424}, {@code 9.0.100}, {@code 9.0.100-preview.1}): Downloads
      * the exact SDK version specified. Use this for determinism.
      * <p>
      * <strong>Channel-style values</strong> (e.g. {@code 8.0}, {@code 9.0}, {@code LTS}, {@code STS}, {@code latest},
      * {@code current}): Downloads the latest patch of that channel. The version is pinned on first successful download
-     * into the cache directory (e.g. {@code .../sdk/8.0/}); later upstream patches are not automatically picked up.
+     * into the cache directory (e.g. {@code .../<rid>/8.0/}); later upstream patches are not automatically picked up.
      * To use latest patches, clear the cache or use an exact version.
      * <p>
      * This parameter is mutually exclusive with {@link #dotnetExecutable}; configuring both fails the build
      * immediately with a clear error message. If neither is set, {@code dotnet} being available via the {@code PATH}
      * environment variable is assumed (this is the default, unchanged behaviour).
      */
-    @Parameter
+    @Parameter(property = "dotnet.sdk.version")
     protected String dotnetSdkVersion;
 
     /**
@@ -63,14 +72,15 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
      * <br/>
      * The location of the cache directory can be configured with {@link #dotnetSdkCacheBaseDirectory}.
      */
-    @Parameter(defaultValue = "maven-dotnet-sdk-local")
+    @Parameter(defaultValue = "dotnet-sdk", property = "dotnet.sdk.cacheName")
     protected String dotnetSdkCacheName;
 
     /**
      * This parameter specifies the base directory in which the {@link #dotnetSdkCacheName versioned .NET SDK cache}
-     * is located.
+     * is located. It defaults to the local maven repository. Do not point it to a network file system, since the
+     * file locks used to synchronize concurrent builds are unreliable there.
      */
-    @Parameter(defaultValue = "${user.home}")
+    @Parameter(defaultValue = "${settings.localRepository}", property = "dotnet.sdk.cacheBaseDirectory")
     protected String dotnetSdkCacheBaseDirectory;
 
     /**
@@ -235,11 +245,22 @@ public abstract class AbstractDotnetMojo extends AbstractMojo {
                 targetDirectory,
                 projectVersion,
                 buildProperties(),
-                environmentVariables,
+                effectiveEnvironment(dotnetSdkVersion != null && !dotnetSdkVersion.isBlank(), environmentVariables),
                 inlineRunSettings,
                 getLog(),
                 ignoreResult
         );
+    }
+
+    static Map<String, String> effectiveEnvironment(boolean managedSdk, Map<String, String> userEnvironment) {
+
+        if (!managedSdk) {
+            return userEnvironment;
+        }
+
+        Map<String, String> result = new LinkedHashMap<>(DotnetSdkProvisioner.MANAGED_SDK_ENVIRONMENT);
+        result.putAll(userEnvironment);
+        return result;
     }
 
     protected File resolveDotnetExecutable() throws MojoExecutionException {

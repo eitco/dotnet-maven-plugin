@@ -28,6 +28,19 @@ public class DotnetSdkProvisioner {
         void install(String version, File installDir, String rid, int timeoutSeconds) throws MojoExecutionException;
     }
 
+    /**
+     * Environment variables given to every {@code dotnet} process run with a managed SDK, so that it does not write
+     * to the user's {@code ~/.dotnet} (first run experience, https dev certificate, global tools path, workload
+     * update notifications).
+     */
+    static final Map<String, String> MANAGED_SDK_ENVIRONMENT = Map.of(
+            "DOTNET_NOLOGO", "1",
+            "DOTNET_SKIP_FIRST_TIME_EXPERIENCE", "1",
+            "DOTNET_GENERATE_ASPNET_CERTIFICATE", "false",
+            "DOTNET_ADD_GLOBAL_TOOLS_TO_PATH", "false",
+            "DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE", "1"
+    );
+
     private static final Map<String, Object> JVM_LOCKS = new ConcurrentHashMap<>();
     private static final ExecutorService LOCK_EXECUTOR = Executors.newCachedThreadPool();
 
@@ -49,9 +62,10 @@ public class DotnetSdkProvisioner {
 
     public File resolveExecutable(String version) throws MojoExecutionException {
         String rid = computeRid();
-        File sdkDir = new File(new File(new File(cacheRoot, rid), "sdk"), version);
-        File markerFile = new File(new File(cacheRoot, rid + "/markers"), version + ".provisioned");
-        File lockFile = new File(new File(cacheRoot, rid + "/locks"), version + ".lock");
+        File ridDir = new File(cacheRoot, rid);
+        File sdkDir = new File(ridDir, version);
+        File markerFile = new File(ridDir, version + ".provisioned");
+        File lockFile = new File(ridDir, version + ".lock");
         File executable = new File(sdkDir, rid.startsWith("win") ? "dotnet.exe" : "dotnet");
 
         if (isProvisioned(markerFile, executable)) {

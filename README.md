@@ -80,27 +80,47 @@ Set the `<dotnetSdkVersion>` parameter and the plugin will download and cache th
 </plugin>
 ````
 
-The SDK is downloaded using Microsoft's official [`dotnet-install` script](https://learn.microsoft.com/dotnet/core/tools/dotnet-install-script) and stored in a versioned cache directory (default: `~/.m2/repository/.maven-dotnet-sdk-local/<rid>/<version>`) without any system-wide installation. The same version is reused across repeated builds and is safe for concurrent builds.
+The SDK is downloaded using Microsoft's official [`dotnet-install` script](https://learn.microsoft.com/dotnet/core/tools/dotnet-install-script) and stored in a versioned cache directory inside the local Maven repository (default: `~/.m2/repository/.dotnet-sdk/<rid>/<version>`, e.g. `.../.dotnet-sdk/linux-x64/8.0.404`) without any system-wide installation. The same version is reused across repeated builds. Concurrent builds — in the same or in different Maven processes — requesting the same version wait for each other via a file lock (`<rid>/<version>.lock`), so the SDK is downloaded only once. A finished installation is marked by `<rid>/<version>.provisioned`; an incomplete one is cleaned up and installed again.
+
+The version can also be given on the command line: `mvn install -Ddotnet.sdk.version=8.0.404`.
 
 **Supported versions**:
 - **Exact versions** (e.g. `8.0.424`, `9.0.100`, `9.0.100-preview.1`): Uses `--version`, downloads the exact SDK.
 - **Channel-style values** (e.g. `8.0`, `9.0`, `LTS`, `STS`, `latest`, `current`): Uses `--channel`, pins to the latest patch of that channel at first successful download. Later patches for that channel are not auto-picked unless the cache is cleared or an exact version is used.
 
-**Caching caveat**: A channel-style value like `dotnetSdkVersion=8.0` pins whatever exact SDK version that channel resolved to **on first successful provisioning** into the cache directory (`.../sdk/8.0/`). Subsequent builds reuse that pinned patch, so you don't pick up new upstream patches automatically — this is intentional for determinism. If you want latest patches to be picked up, clear the cache directory or use exact versions instead.
+**Caching caveat**: A channel-style value like `dotnetSdkVersion=8.0` pins whatever exact SDK version that channel resolved to **on first successful provisioning** into the cache directory (`.../<rid>/8.0/`). Subsequent builds reuse that pinned patch, so you don't pick up new upstream patches automatically — this is intentional for determinism. If you want latest patches to be picked up, clear the cache directory or use exact versions instead.
 
 **Note**: `<dotnetExecutable>` and `<dotnetSdkVersion>` are mutually exclusive. Configuring both will fail the build immediately.
 
+#### User environment
+
+The managed SDK does not change the user's environment: nothing is added to `PATH`, no shell profile is modified, and no system-wide installation takes place. Every `dotnet` process started with a managed SDK additionally gets the following environment variables, which keep the .NET CLI from writing its first-run artifacts (HTTPS development certificate, global tools path, workload notifications) to `~/.dotnet`:
+
+| Variable                                   | Value   |
+|--------------------------------------------|---------|
+| `DOTNET_NOLOGO`                            | `1`     |
+| `DOTNET_SKIP_FIRST_TIME_EXPERIENCE`        | `1`     |
+| `DOTNET_GENERATE_ASPNET_CERTIFICATE`       | `false` |
+| `DOTNET_ADD_GLOBAL_TOOLS_TO_PATH`          | `false` |
+| `DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE` | `1`     |
+
+Each of them can be overridden with `<environmentVariables>`. The .NET CLI still creates an empty `~/.dotnet/<version>.dotnetFirstUseSentinel` file; this cannot be turned off by an environment variable.
+
 #### Cache directory customization
 
-Override the cache location (defaults to `${settings.localRepository}/.maven-dotnet-sdk-local`):
+Override the cache location (defaults to `${settings.localRepository}/.dotnet-sdk`):
 
 ````xml
 <configuration>
     <dotnetSdkVersion>8.0.404</dotnetSdkVersion>
-    <dotnetSdkCacheBaseDirectory>~/.dotnet-sdks</dotnetSdkCacheBaseDirectory>
+    <dotnetSdkCacheBaseDirectory>${user.home}/.cache</dotnetSdkCacheBaseDirectory>
     <dotnetSdkCacheName>myproject-sdks</dotnetSdkCacheName>
 </configuration>
 ````
+
+This results in `${user.home}/.cache/.myproject-sdks/<rid>/<version>`. Both values can also be set on the command line with `-Ddotnet.sdk.cacheBaseDirectory=...` and `-Ddotnet.sdk.cacheName=...`.
+
+Version 1.0.0 stored the SDK in `~/.maven-dotnet-sdk-local`. That directory is no longer used and can be deleted.
 
 #### Network filesystem limitation
 
